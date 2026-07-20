@@ -100,7 +100,7 @@ public class SonarrClientTests
         var result = await client.AddSeriesAsync(TestSettings, tvdbId: 81797, title: "One Piece", qualityProfileId: 4, rootFolderPath: "/anime");
 
         Assert.True(result.Success);
-        Assert.Equal(55, result.Data);
+        Assert.Equal(55, result.Data!.Id);
         using var body = JsonDocument.Parse(handler.LastRequestBody!);
         Assert.Equal("none", body.RootElement.GetProperty("addOptions").GetProperty("monitor").GetString());
         Assert.False(body.RootElement.GetProperty("addOptions").GetProperty("searchForMissingEpisodes").GetBoolean());
@@ -121,7 +121,7 @@ public class SonarrClientTests
         var result = await client.AddSeriesAsync(TestSettings, tvdbId: 81798, title: "Some Sequel", qualityProfileId: 4, rootFolderPath: "/anime", monitorMode: "all", searchOnAdd: true);
 
         Assert.True(result.Success);
-        Assert.Equal(56, result.Data);
+        Assert.Equal(56, result.Data!.Id);
         using var body = JsonDocument.Parse(handler.LastRequestBody!);
         Assert.Equal("all", body.RootElement.GetProperty("addOptions").GetProperty("monitor").GetString());
         Assert.True(body.RootElement.GetProperty("addOptions").GetProperty("searchForMissingEpisodes").GetBoolean());

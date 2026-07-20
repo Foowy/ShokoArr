@@ -18,6 +18,9 @@ public class PendingSearch
     /// <summary>The Sonarr series ID this episode belongs to.</summary>
     public int SonarrSeriesId { get; set; }
 
+    /// <summary>The Sonarr series' title slug, used to build a direct link to its Sonarr UI page. Null for entries persisted before this field was added.</summary>
+    public string? SonarrTitleSlug { get; set; }
+
     /// <summary>The Sonarr episode ID to unmonitor once Shoko confirms the episode is no longer missing.</summary>
     public int SonarrEpisodeId { get; set; }
 

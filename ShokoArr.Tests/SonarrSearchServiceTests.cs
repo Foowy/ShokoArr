@@ -75,6 +75,22 @@ public class SonarrSearchServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task MonitorAndSearch_PersistsTitleSlugOnPendingSearch()
+    {
+        var episodes = new[] { new { id = 101, seasonNumber = 1, episodeNumber = 1, absoluteEpisodeNumber = 1 } };
+        var client = MakeClient(req => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(req.RequestUri!.AbsolutePath.Contains("/episode") && req.Method == HttpMethod.Get ? JsonSerializer.Serialize(episodes) : "{}"),
+        });
+        var service = MakeService(client);
+
+        var result = await service.MonitorAndSearchAsync(TestSettings, 1, 9, [5001], SeriesWith((5001, 1, false, "Episode 1")), "some-anime");
+
+        Assert.True(result.Success);
+        Assert.Equal("some-anime", _stores[^1].GetPendingSearches().Single().SonarrTitleSlug);
+    }
+
+    [Fact]
     public async Task MonitorAndSearch_SpecialStillMapsViaSeasonZero()
     {
         var episodes = new List<object>

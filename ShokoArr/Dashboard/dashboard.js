@@ -451,7 +451,7 @@ document.getElementById('open-settings').onclick = () => {
   document.getElementById('settings-panel').classList.toggle('hidden');
 };
 
-function renderPending(entries) {
+function renderPending(entries, sonarrBaseUrl) {
   const container = document.getElementById('pending-list');
   container.innerHTML = '';
   if (!entries || entries.length === 0) {
@@ -470,6 +470,14 @@ function renderPending(entries) {
     const episodeLabel = entry.EpisodeTitle || `AniDB ep ${entry.AnidbEpisodeId}`;
     meta.textContent = `${seriesLabel} · ${episodeLabel} · triggered ${new Date(entry.TriggeredAtUtc).toLocaleString()}`;
     row.appendChild(meta);
+    if (entry.SonarrTitleSlug && sonarrBaseUrl) {
+      const sonarrLink = document.createElement('a');
+      sonarrLink.href = `${sonarrBaseUrl.replace(/\/$/, '')}/series/${entry.SonarrTitleSlug}`;
+      sonarrLink.target = '_blank';
+      sonarrLink.rel = 'noopener noreferrer';
+      sonarrLink.textContent = 'View in Sonarr';
+      row.appendChild(sonarrLink);
+    }
     const cancelBtn = document.createElement('button');
     cancelBtn.textContent = 'Cancel';
     cancelBtn.onclick = () => cancelPending(entry.ShokoSeriesId, entry.AnidbEpisodeId);
@@ -479,13 +487,13 @@ function renderPending(entries) {
 }
 
 async function loadPending() {
-  const result = await fetchJson('/Scan/pending');
-  renderPending(result.Data);
+  const [result, settings] = await Promise.all([fetchJson('/Scan/pending'), fetchJson('/Settings')]);
+  renderPending(result.Data, settings.Data?.BaseUrl);
 }
 
 async function cancelPending(shokoSeriesId, anidbEpisodeId) {
-  const result = await fetchJson(`/Scan/pending/${shokoSeriesId}/${anidbEpisodeId}`, { method: 'DELETE' });
-  renderPending(result.Data);
+  await fetchJson(`/Scan/pending/${shokoSeriesId}/${anidbEpisodeId}`, { method: 'DELETE' });
+  await loadPending();
 }
 
 document.getElementById('open-pending').onclick = () => {
