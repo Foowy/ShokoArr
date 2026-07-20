@@ -129,7 +129,7 @@ public class SonarrController(SeriesMatcher matcher, SonarrSearchService searchS
         // Lookup returns candidates regardless of whether already added, so check existence first — this single action must work whether the series is new or not.
         var existing = await sonarrClient.GetExistingSeriesByTvdbIdAsync(settings, request.TvdbId);
         if (existing.Success && existing.Data!.Count > 0)
-            return await MonitorAndSearchAsync(settings, request.ShokoSeriesId, existing.Data[0].Id, request.AnidbEpisodeIds, series);
+            return await MonitorAndSearchAsync(settings, request.ShokoSeriesId, existing.Data[0].Id, existing.Data[0].TitleSlug, request.AnidbEpisodeIds, series);
 
         List<int>? tagIds = null;
         if (!string.IsNullOrEmpty(series.GroupTitle))
@@ -143,7 +143,7 @@ public class SonarrController(SeriesMatcher matcher, SonarrSearchService searchS
         if (!added.Success)
             return Conflict(new ApiResponse<object>(Success: false, Message: added.ErrorMessage, Data: null));
 
-        return await MonitorAndSearchAsync(settings, request.ShokoSeriesId, added.Data, request.AnidbEpisodeIds, series);
+        return await MonitorAndSearchAsync(settings, request.ShokoSeriesId, added.Data!.Id, added.Data.TitleSlug, request.AnidbEpisodeIds, series);
     }
 
     /// <summary>Monitors and searches for the given missing episodes on a series already present in Sonarr.</summary>
@@ -158,13 +158,13 @@ public class SonarrController(SeriesMatcher matcher, SonarrSearchService searchS
             return NotFound(new ApiResponse<object>(Success: false, Message: "Series not found in the last scan.", Data: null));
 
         var settings = cacheStore.GetSettings();
-        return await MonitorAndSearchAsync(settings, request.ShokoSeriesId, request.SonarrSeriesId, request.AnidbEpisodeIds, series);
+        return await MonitorAndSearchAsync(settings, request.ShokoSeriesId, request.SonarrSeriesId, null, request.AnidbEpisodeIds, series);
     }
 
     /// <summary>Monitors and searches for the given missing episodes on a Sonarr series, via <see cref="SonarrSearchService.MonitorAndSearchAsync"/>.</summary>
-    private async Task<IActionResult> MonitorAndSearchAsync(Config.SonarrSettings settings, int shokoSeriesId, int sonarrSeriesId, List<int> anidbEpisodeIds, Models.SeriesMissingResult series)
+    private async Task<IActionResult> MonitorAndSearchAsync(Config.SonarrSettings settings, int shokoSeriesId, int sonarrSeriesId, string? sonarrTitleSlug, List<int> anidbEpisodeIds, Models.SeriesMissingResult series)
     {
-        var result = await searchService.MonitorAndSearchAsync(settings, shokoSeriesId, sonarrSeriesId, anidbEpisodeIds, series);
+        var result = await searchService.MonitorAndSearchAsync(settings, shokoSeriesId, sonarrSeriesId, anidbEpisodeIds, series, sonarrTitleSlug);
         if (!result.Success)
             return Conflict(new ApiResponse<object>(Success: false, Message: result.ErrorMessage, Data: null));
 
