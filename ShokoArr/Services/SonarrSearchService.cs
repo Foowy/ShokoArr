@@ -8,7 +8,7 @@ namespace ShokoArr.Services;
 public class SonarrSearchService(SonarrClient sonarrClient, ScanCacheStore cacheStore, NotificationService notificationService)
 {
     /// <returns>Success with an optional caveat message (unmapped episodes skipped), or failure with a reason.</returns>
-    public async Task<ArrActionResult<string?>> MonitorAndSearchAsync(SonarrSettings settings, int shokoSeriesId, int sonarrSeriesId, List<int> anidbEpisodeIds, SeriesMissingResult series, CancellationToken ct = default)
+    public async Task<ArrActionResult<string?>> MonitorAndSearchAsync(SonarrSettings settings, int shokoSeriesId, int sonarrSeriesId, List<int> anidbEpisodeIds, SeriesMissingResult series, string? sonarrTitleSlug = null, CancellationToken ct = default)
     {
         var episodesResult = await sonarrClient.GetEpisodesAsync(settings, sonarrSeriesId, ct);
         if (!episodesResult.Success)
@@ -65,6 +65,7 @@ public class SonarrSearchService(SonarrClient sonarrClient, ScanCacheStore cache
                 AnidbEpisodeId = ep.AnidbEpisodeId,
                 EpisodeTitle = ep.Title,
                 SonarrSeriesId = sonarrSeriesId,
+                SonarrTitleSlug = sonarrTitleSlug,
                 SonarrEpisodeId = sonarrEpisodeIdByAnidbId[ep.AnidbEpisodeId],
                 TriggeredAtUtc = triggeredAt,
             });

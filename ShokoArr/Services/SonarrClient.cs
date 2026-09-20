@@ -26,7 +26,7 @@ public record ArrRootFolderResource(
     [property: JsonPropertyName("path")] string Path);
 
 /// <summary>Minimal Sonarr series resource, used only to detect whether a series already exists.</summary>
-public record SonarrSeriesResource([property: JsonPropertyName("id")] int Id);
+public record SonarrSeriesResource([property: JsonPropertyName("id")] int Id, [property: JsonPropertyName("titleSlug")] string? TitleSlug);
 
 /// <summary>Sonarr tag resource, as returned by Sonarr's v3 API.</summary>
 public record SonarrTagResource([property: JsonPropertyName("id")] int Id, [property: JsonPropertyName("label")] string Label);
@@ -50,7 +50,7 @@ public class SonarrClient(HttpClient httpClient) : ArrClientBase(httpClient)
         SendAsync<List<SonarrSeriesLookupResult>>(BuildRequest(HttpMethod.Get, settings, $"/api/v3/series/lookup?term={Uri.EscapeDataString(title)}"), ct);
 
     /// <summary>Adds a series to Sonarr with seriesType "anime" (this plugin is an anime-only bridge). Defaults to monitoring disabled and no immediate search — the owned-series flow explicitly monitors and searches only specific missing episodes afterward. Pass monitorMode "all" and searchOnAdd true for the discovery flow (adding a wholly unowned series), which has no per-episode missing data to act on selectively.</summary>
-    public async Task<ArrActionResult<int>> AddSeriesAsync(SonarrSettings settings, int tvdbId, string title, int qualityProfileId, string rootFolderPath, string monitorMode = "none", bool searchOnAdd = false, List<int>? tagIds = null, CancellationToken ct = default)
+    public async Task<ArrActionResult<SonarrSeriesResource>> AddSeriesAsync(SonarrSettings settings, int tvdbId, string title, int qualityProfileId, string rootFolderPath, string monitorMode = "none", bool searchOnAdd = false, List<int>? tagIds = null, CancellationToken ct = default)
     {
         var request = BuildRequest(HttpMethod.Post, settings, "/api/v3/series");
         request.Content = JsonContent.Create(new
@@ -67,11 +67,13 @@ public class SonarrClient(HttpClient httpClient) : ArrClientBase(httpClient)
 
         var result = await SendAsync<JsonElement>(request, ct).ConfigureAwait(false);
         if (!result.Success)
-            return ArrActionResult<int>.Fail(result.ErrorMessage!);
+            return ArrActionResult<SonarrSeriesResource>.Fail(result.ErrorMessage!);
 
-        return result.Data.TryGetProperty("id", out var idProp)
-            ? ArrActionResult<int>.Ok(idProp.GetInt32())
-            : ArrActionResult<int>.Fail("Sonarr's add-series response did not contain an id.");
+        if (!result.Data.TryGetProperty("id", out var idProp))
+            return ArrActionResult<SonarrSeriesResource>.Fail("Sonarr's add-series response did not contain an id.");
+
+        var titleSlug = result.Data.TryGetProperty("titleSlug", out var slugProp) ? slugProp.GetString() : null;
+        return ArrActionResult<SonarrSeriesResource>.Ok(new SonarrSeriesResource(idProp.GetInt32(), titleSlug));
     }
 
     /// <summary>Gets Sonarr's configured quality profiles, for the user to choose one during settings setup.</summary>
