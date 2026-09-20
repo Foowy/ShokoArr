@@ -12,13 +12,7 @@ public interface ISettingsSource
 
 public class NativeSettingsSource(IConfigurationService configurationService, ScanCacheStore legacyStore) : ISettingsSource
 {
-    private readonly Lazy<bool> _migrated = new(() =>
-    {
-        var config = configurationService.Load<ShokoArrConfiguration>(copy: true);
-        if (LegacySettingsMigrator.TryMigrate(legacyStore.GetLegacySettings(), legacyStore.GetLegacyRadarrSettings(), config))
-            configurationService.Save(config);
-        return true;
-    });
+    private readonly RetryOnceGate _migration = new();
 
     public SonarrSettings GetSonarr() => Load().ToSonarrSettings();
 
@@ -26,7 +20,12 @@ public class NativeSettingsSource(IConfigurationService configurationService, Sc
 
     private ShokoArrConfiguration Load()
     {
-        _ = _migrated.Value;
+        _migration.Run(() =>
+        {
+            var config = configurationService.Load<ShokoArrConfiguration>(copy: true);
+            if (LegacySettingsMigrator.TryMigrate(legacyStore.GetLegacySettings(), legacyStore.GetLegacyRadarrSettings(), config))
+                configurationService.Save(config);
+        });
         return configurationService.Load<ShokoArrConfiguration>();
     }
 }
