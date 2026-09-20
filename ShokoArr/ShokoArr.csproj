@@ -4,7 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RepositoryUrl>https://github.com/Foowy/ShokoArr</RepositoryUrl>
-    <PackageTags>hosted-service, sonarr, missing-episodes</PackageTags>
+    <PackageTags>hosted-service, sonarr, radarr, missing-episodes</PackageTags>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
