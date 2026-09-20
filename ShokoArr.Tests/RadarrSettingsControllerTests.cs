@@ -1,7 +1,9 @@
+using System.Net;
 using Microsoft.AspNetCore.Mvc;
 using ShokoArr.Config;
 using ShokoArr.Controllers;
 using ShokoArr.Controllers.Api;
+using ShokoArr.Services;
 using Xunit;
 
 namespace ShokoArr.Tests;
@@ -39,5 +41,35 @@ public class RadarrSettingsControllerTests
         Assert.Equal(2, source.Radarr.QualityProfileId);
         Assert.Equal("/movies", source.Radarr.RootFolderPath);
         Assert.Equal("sk", source.Sonarr.ApiKey);
+    }
+
+    private class StubHandler(string json) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json) });
+    }
+
+    [Fact]
+    public async Task GetSavedQualityProfile_ResolvesNameFromRadarr()
+    {
+        var controller = new RadarrSettingsController(Stored(), new RadarrClient(new HttpClient(new StubHandler("""[{"id":1,"name":"Any"},{"id":2,"name":"HD-1080p"}]"""))));
+
+        var ok = Assert.IsType<OkObjectResult>(await controller.GetSavedQualityProfile());
+        var response = Assert.IsType<ShokoArrBaseController.ApiResponse<object>>(ok.Value);
+
+        Assert.True(response.Success);
+        var profile = Assert.IsType<ArrQualityProfileResource>(response.Data);
+        Assert.Equal((2, "HD-1080p"), (profile.Id, profile.Name));
+    }
+
+    [Fact]
+    public async Task GetSavedQualityProfile_ProfileGoneFromRadarr_ReportsFailure()
+    {
+        var controller = new RadarrSettingsController(Stored(), new RadarrClient(new HttpClient(new StubHandler("""[{"id":9,"name":"Other"}]"""))));
+
+        var ok = Assert.IsType<OkObjectResult>(await controller.GetSavedQualityProfile());
+        var response = Assert.IsType<ShokoArrBaseController.ApiResponse<object>>(ok.Value);
+
+        Assert.False(response.Success);
     }
 }
