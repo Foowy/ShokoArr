@@ -14,6 +14,34 @@
   "image_url": "https://raw.githubusercontent.com/Foowy/ShokoArr/master/assets/master_shokosonarr.png",
   "releases": [
     {
+      "version": "0.6.1",
+      "tag": "v0.6.1",
+      "source_revision": "5753d21f8518afc7efedd1601cd4305cc552ac5d",
+      "released_at": "2026-09-20T13:34:37Z",
+      "channel": "Stable",
+      "release_notes": "## What's Changed\n* ci: trigger Dependabot auto-merge on pull_request by @Foowy in https://github.com/Foowy/ShokoArr/pull/45\n* fix: match specials to Sonarr season 0 by air date and title by @Foowy in https://github.com/Foowy/ShokoArr/pull/46\n* chore: bump version to 0.6.1 by @Foowy in https://github.com/Foowy/ShokoArr/pull/47\n\n\n**Full Changelog**: https://github.com/Foowy/ShokoArr/compare/v0.6.0...v0.6.1",
+      "archives": [
+        {
+          "runtime": "linux-arm64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/ShokoArr/releases/download/v0.6.1/ShokoArr-v0.6.1_linux-arm64.zip",
+          "checksum": "b434c1fe606ea5389d801e5c982a40506fa3f76ce44bffd76d05f863409a05fb"
+        },
+        {
+          "runtime": "linux-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/ShokoArr/releases/download/v0.6.1/ShokoArr-v0.6.1_linux-x64.zip",
+          "checksum": "caa742389309d88dc4229ebfc3c0ff7f96ef07cc98a5c9100a1277351135a438"
+        },
+        {
+          "runtime": "win-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/ShokoArr/releases/download/v0.6.1/ShokoArr-v0.6.1_win-x64.zip",
+          "checksum": "ad45d226d489ff10878b4ad9f0fd2918155398b18dacaa5b0f04789f579801e5"
+        }
+      ]
+    },
+    {
       "version": "0.6.0",
       "tag": "v0.6.0",
       "source_revision": "e78c89e95aefe6d5eb39f343c911def038284f4e",
