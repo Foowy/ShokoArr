@@ -1,8 +1,11 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.Extensions.Logging;
 using Shoko.Abstractions.Config;
 using Shoko.Abstractions.Config.Attributes;
 using Shoko.Abstractions.Config.Components;
+using Shoko.Abstractions.Config.Enums;
+using ShokoArr.Services;
 
 namespace ShokoArr.Config;
 
@@ -82,4 +85,32 @@ public class ShokoArrConfiguration : IConfiguration
         QualityProfileId = RadarrQualityProfile.HasSelectedValue ? RadarrQualityProfile.SelectedValue : null,
         RootFolderPath = RadarrRootFolder.HasSelectedValue ? RadarrRootFolder.SelectedValue : null,
     };
+
+    [CustomAction(Theme = DisplayColorTheme.Primary, Position = DisplayButtonPosition.Top, SectionName = "Sonarr")]
+    public ConfigurationActionResult TestSonarr(ConfigurationActionContext<ShokoArrConfiguration> context)
+    {
+        var options = ArrOptionsLoader.LoadAsync(context.PluginManager.GetRequiredService<SonarrClient>(), ToSonarrSettings()).GetAwaiter().GetResult();
+        if (!options.Success)
+        {
+            context.Logger.LogWarning("Sonarr connection test failed: {Error}", options.ErrorMessage);
+            return new($"Could not reach Sonarr: {options.ErrorMessage}", DisplayColorTheme.Warning);
+        }
+
+        ArrOptionsLoader.Apply(options.Data!, SonarrQualityProfile, SonarrRootFolder);
+        return new(this);
+    }
+
+    [CustomAction(Theme = DisplayColorTheme.Primary, Position = DisplayButtonPosition.Top, SectionName = "Radarr")]
+    public ConfigurationActionResult TestRadarr(ConfigurationActionContext<ShokoArrConfiguration> context)
+    {
+        var options = ArrOptionsLoader.LoadAsync(context.PluginManager.GetRequiredService<RadarrClient>(), ToRadarrSettings()).GetAwaiter().GetResult();
+        if (!options.Success)
+        {
+            context.Logger.LogWarning("Radarr connection test failed: {Error}", options.ErrorMessage);
+            return new($"Could not reach Radarr: {options.ErrorMessage}", DisplayColorTheme.Warning);
+        }
+
+        ArrOptionsLoader.Apply(options.Data!, RadarrQualityProfile, RadarrRootFolder);
+        return new(this);
+    }
 }
