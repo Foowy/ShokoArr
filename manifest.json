@@ -15,6 +15,34 @@
   "icon_url": "https://raw.githubusercontent.com/Foowy/ShokoArr/master/assets/icon.png",
   "releases": [
     {
+      "version": "0.7.0",
+      "tag": "v0.7.0",
+      "source_revision": "1ac66ed5d69a2a47053e7b12dab6b97caf38f1d8",
+      "released_at": "2026-09-20T18:44:54Z",
+      "channel": "Stable",
+      "release_notes": "## What's Changed\n* refactor: simplify scanner, clients and history handling by @Foowy in https://github.com/Foowy/ShokoArr/pull/48\n* feat: move settings to native Shoko configuration by @Foowy in https://github.com/Foowy/ShokoArr/pull/49\n* fix: restore dashboard settings form on native configuration by @Foowy in https://github.com/Foowy/ShokoArr/pull/50\n* fix: stop browsers autofilling saved logins into settings fields by @Foowy in https://github.com/Foowy/ShokoArr/pull/51\n* feat: add Neonglass dashboard theme and plugin icon by @Foowy in https://github.com/Foowy/ShokoArr/pull/52\n\n\n**Full Changelog**: https://github.com/Foowy/ShokoArr/compare/v0.6.1...v0.7.0",
+      "archives": [
+        {
+          "runtime": "linux-arm64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/ShokoArr/releases/download/v0.7.0/ShokoArr-v0.7.0_linux-arm64.zip",
+          "checksum": "fa4c0f3c6812494981ca4cc336d76bd7784d8b7141e62788282b932940d2ec91"
+        },
+        {
+          "runtime": "linux-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/ShokoArr/releases/download/v0.7.0/ShokoArr-v0.7.0_linux-x64.zip",
+          "checksum": "9817ef71ee83dd4f9c2dd5fc25ddaeca361ce191d7e127e4627edc351f92eea7"
+        },
+        {
+          "runtime": "win-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/ShokoArr/releases/download/v0.7.0/ShokoArr-v0.7.0_win-x64.zip",
+          "checksum": "1efe5fbbea9c9a74eabb9dd1da4cc19ea52081a2edbe6eee56551c4dae3600d2"
+        }
+      ]
+    },
+    {
       "version": "0.6.1",
       "tag": "v0.6.1",
       "source_revision": "5753d21f8518afc7efedd1601cd4305cc552ac5d",
