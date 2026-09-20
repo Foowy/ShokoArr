@@ -15,6 +15,34 @@
   "icon_url": "https://raw.githubusercontent.com/Foowy/ShokoArr/master/assets/icon.png",
   "releases": [
     {
+      "version": "0.8.0",
+      "tag": "v0.8.0",
+      "source_revision": "4ea357b6603a0d1086267f0fa9fd2381af59b21d",
+      "released_at": "2026-09-20T18:59:48Z",
+      "channel": "Stable",
+      "release_notes": "## What's Changed\n* feat: badge episodes Sonarr already has, with a setting to count them as missing by @Foowy in https://github.com/Foowy/ShokoArr/pull/53\n* chore: bump version to 0.8.0 by @Foowy in https://github.com/Foowy/ShokoArr/pull/54\n\n\n**Full Changelog**: https://github.com/Foowy/ShokoArr/compare/v0.7.0...v0.8.0",
+      "archives": [
+        {
+          "runtime": "linux-arm64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/ShokoArr/releases/download/v0.8.0/ShokoArr-v0.8.0_linux-arm64.zip",
+          "checksum": "de668437be489bd911f859168cdef53d7d91e2c3a4a967d8636d74b9043b8edd"
+        },
+        {
+          "runtime": "linux-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/ShokoArr/releases/download/v0.8.0/ShokoArr-v0.8.0_linux-x64.zip",
+          "checksum": "edc8c1195dbe5c87c8917d556ceeb33d7883b9ad7f86ccedf91cf65022bafa0e"
+        },
+        {
+          "runtime": "win-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/ShokoArr/releases/download/v0.8.0/ShokoArr-v0.8.0_win-x64.zip",
+          "checksum": "e0119fbb4b08ea8c58b1cacd9ad0421300a986b975e68c840cb622452b04b104"
+        }
+      ]
+    },
+    {
       "version": "0.7.0",
       "tag": "v0.7.0",
       "source_revision": "1ac66ed5d69a2a47053e7b12dab6b97caf38f1d8",
