@@ -7,7 +7,7 @@ using ShokoArr.Models;
 namespace ShokoArr.Services;
 
 /// <summary>Scans the Shoko collection for missing episodes on already-inventoried series, and reconciles previously-triggered Sonarr searches once Shoko confirms an episode was imported.</summary>
-public class MissingEpisodeScanner(IMetadataService metadataService, ScanCacheStore cacheStore, SonarrClient sonarrClient, NotificationService notificationService)
+public class MissingEpisodeScanner(IMetadataService metadataService, ScanCacheStore cacheStore, SonarrClient sonarrClient, NotificationService notificationService, ISettingsSource settingsSource)
 {
     private static readonly Logger s_logger = LogManager.GetCurrentClassLogger();
 
@@ -65,7 +65,7 @@ public class MissingEpisodeScanner(IMetadataService metadataService, ScanCacheSt
     {
         ct.ThrowIfCancellationRequested();
         var results = new List<SeriesMissingResult>();
-        var settings = cacheStore.GetSettings();
+        var settings = settingsSource.GetSonarr();
         var pending = cacheStore.GetPendingSearches();
         var pendingByKey = pending.ToLookup(p => (p.ShokoSeriesId, p.AnidbEpisodeId));
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -171,7 +171,7 @@ public class MissingEpisodeScanner(IMetadataService metadataService, ScanCacheSt
             || series.LocalEpisodeCounts.Episodes + series.LocalEpisodeCounts.Specials <= 0)
             return Task.FromResult<SeriesMissingResult?>(null);
 
-        var settings = cacheStore.GetSettings();
+        var settings = settingsSource.GetSonarr();
         var pendingByKey = cacheStore.GetPendingSearches().ToLookup(p => (p.ShokoSeriesId, p.AnidbEpisodeId));
         var inScope = ScopedTo(MissingCandidates(series), series, settings);
         return Task.FromResult(BuildSeriesResult(series, inScope, settings, pendingByKey, DateOnly.FromDateTime(DateTime.UtcNow)));

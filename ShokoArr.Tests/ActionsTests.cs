@@ -15,6 +15,7 @@ public class ActionsTests : IDisposable
 {
     private readonly string _tempDir = Path.Combine(Path.GetTempPath(), "shoko-sonarr-tests-" + Guid.NewGuid());
     private readonly ScanCacheStore _cacheStore;
+    private readonly FakeSettingsSource _settings = new();
 
     public ActionsTests() => _cacheStore = new ScanCacheStore(_tempDir);
 
@@ -39,7 +40,7 @@ public class ActionsTests : IDisposable
     {
         var metadataService = new Mock<IMetadataService>();
         metadataService.Setup(m => m.GetAllShokoSeries()).Returns([]);
-        var scanner = new MissingEpisodeScanner(metadataService.Object, _cacheStore, MakeSonarrClient(_ => new HttpResponseMessage(HttpStatusCode.OK)), new NotificationService(new HttpClient()));
+        var scanner = new MissingEpisodeScanner(metadataService.Object, _cacheStore, MakeSonarrClient(_ => new HttpResponseMessage(HttpStatusCode.OK)), new NotificationService(new HttpClient()), _settings);
         var action = new TriggerScanAction(scanner);
 
         Assert.Null(_cacheStore.GetLastScan());
@@ -67,7 +68,7 @@ public class ActionsTests : IDisposable
         var actionClient = MakeSonarrClient(_ => new HttpResponseMessage(HttpStatusCode.OK));
         var matcher = new SeriesMatcher(MakeSonarrClient(_ => new HttpResponseMessage(HttpStatusCode.OK)));
         var searchService = new SonarrSearchService(actionClient, _cacheStore, new NotificationService(new HttpClient()));
-        var action = new SearchMissingEpisodesAction(matcher, searchService, actionClient, _cacheStore);
+        var action = new SearchMissingEpisodesAction(matcher, searchService, actionClient, _cacheStore, _settings);
         SetSeriesContext(action, MakeSeries(1).Object);
 
         var result = await action.Validate();
@@ -79,7 +80,7 @@ public class ActionsTests : IDisposable
     [Fact]
     public async Task SearchMissingEpisodesAction_Validate_SeriesWithConfirmedTvdbMatch_ReturnsNull()
     {
-        _cacheStore.SaveSettings(new SonarrSettings { BaseUrl = "http://sonarr.local:8989", ApiKey = "testkey" });
+        _settings.Sonarr = new SonarrSettings { BaseUrl = "http://sonarr.local:8989", ApiKey = "testkey" };
         _cacheStore.SaveScan(new ScanSnapshot
         {
             Series = [new SeriesMissingResult
@@ -96,7 +97,7 @@ public class ActionsTests : IDisposable
         });
         var matcher = new SeriesMatcher(sonarrClient);
         var searchService = new SonarrSearchService(sonarrClient, _cacheStore, new NotificationService(new HttpClient()));
-        var action = new SearchMissingEpisodesAction(matcher, searchService, sonarrClient, _cacheStore);
+        var action = new SearchMissingEpisodesAction(matcher, searchService, sonarrClient, _cacheStore, _settings);
         SetSeriesContext(action, MakeSeries(1).Object);
 
         var result = await action.Validate();
@@ -114,7 +115,7 @@ public class ActionsTests : IDisposable
         var sonarrClient = MakeSonarrClient(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("[]") });
         var matcher = new SeriesMatcher(sonarrClient);
         var searchService = new SonarrSearchService(sonarrClient, _cacheStore, new NotificationService(new HttpClient()));
-        var action = new SearchMissingEpisodesAction(matcher, searchService, sonarrClient, _cacheStore);
+        var action = new SearchMissingEpisodesAction(matcher, searchService, sonarrClient, _cacheStore, _settings);
         SetSeriesContext(action, MakeSeries(1).Object);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => action.Execute());
