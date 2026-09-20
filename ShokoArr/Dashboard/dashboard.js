@@ -430,6 +430,13 @@ async function loadSettings() {
   savedRadarrRootFolderPath = radarrResult.Data.RootFolderPath;
   populateSelect('radarr-settings-quality-profile', savedRadarrQualityProfileId ? [{ Id: savedRadarrQualityProfileId, Name: `#${savedRadarrQualityProfileId}` }] : [], 'Id', 'Name', savedRadarrQualityProfileId);
   populateSelect('radarr-settings-root-folder', savedRadarrRootFolderPath ? [{ Path: savedRadarrRootFolderPath }] : [], 'Path', 'Path', savedRadarrRootFolderPath);
+  if (savedRadarrQualityProfileId) {
+    const radarrProfileResult = await fetchJson('/RadarrSettings/quality-profile');
+    if (radarrProfileResult.Success)
+      populateSelect('radarr-settings-quality-profile', [radarrProfileResult.Data], 'Id', 'Name', savedRadarrQualityProfileId);
+    else
+      setStatus(`Showing Radarr profile #${savedRadarrQualityProfileId} - couldn't resolve its name: ${radarrProfileResult.Message}`, false);
+  }
 }
 
 document.getElementById('scan-now').onclick = async () => {

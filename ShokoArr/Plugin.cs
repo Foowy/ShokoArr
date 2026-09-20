@@ -16,6 +16,9 @@ public class Plugin : IPlugin
     public string? Description => ShokoArrConstants.Description;
 
     /// <inheritdoc/>
+    public string? EmbeddedIconResourceName => "ShokoArr.assets.Icon.png";
+
+    /// <inheritdoc/>
     public IReadOnlyList<PluginPage> GetPages() =>
         [new() { Name = "Missing Episodes", Url = $"{ShokoArrConstants.BasePath}/dashboard" }];
 }

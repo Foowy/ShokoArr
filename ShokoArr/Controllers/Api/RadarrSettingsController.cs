@@ -66,4 +66,23 @@ public class RadarrSettingsController(ISettingsSource settingsSource, RadarrClie
 
         return Ok(new ApiResponse<object>(Success: true, Message: null, Data: new { qualityProfiles = profiles.Data, rootFolders = rootFolders.Data }));
     }
+
+    /// <summary>Resolves the saved quality profile's display name from Radarr, so the dashboard can show it instead of a bare ID before the user re-tests the connection.</summary>
+    /// <returns>200 with the profile's {id, name}, or success=false if no profile is saved or Radarr couldn't be reached.</returns>
+    [HttpGet("quality-profile")]
+    public async Task<IActionResult> GetSavedQualityProfile()
+    {
+        var settings = settingsSource.GetRadarr();
+        if (settings.QualityProfileId is null)
+            return Ok(new ApiResponse<object>(Success: false, Message: "No quality profile saved.", Data: null));
+
+        var profiles = await radarrClient.GetQualityProfilesAsync(settings);
+        if (!profiles.Success)
+            return Ok(new ApiResponse<object>(Success: false, Message: profiles.ErrorMessage, Data: null));
+
+        var match = profiles.Data!.FirstOrDefault(p => p.Id == settings.QualityProfileId);
+        return match is null
+            ? Ok(new ApiResponse<object>(Success: false, Message: "Saved quality profile no longer exists in Radarr.", Data: null))
+            : Ok(new ApiResponse<object>(Success: true, Message: null, Data: match));
+    }
 }
