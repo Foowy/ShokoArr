@@ -1,9 +1,11 @@
-# Shoko Sonarr
+# Shoko Arr
 
-<img src="assets/master_shokosonarr.png" width="200" alt="Shoko Sonarr logo">
+<img src="assets/master_shokosonarr.png" width="200" alt="Shoko Arr logo">
 
-[![CI](https://github.com/Foowy/ShokoSonarr/actions/workflows/ci.yml/badge.svg)](https://github.com/Foowy/ShokoSonarr/actions/workflows/ci.yml)
+[![CI](https://github.com/Foowy/ShokoArr/actions/workflows/ci.yml/badge.svg)](https://github.com/Foowy/ShokoArr/actions/workflows/ci.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+
+> **Renamed from ShokoSonarr.** The plugin now handles Radarr as well as Sonarr, so the "Sonarr" name no longer fit. Existing installs upgrade in place: the plugin ID, stored settings and API routes are unchanged, and the old GitHub URLs redirect. The plugin folder and DLL are now `ShokoArr`, so remove any old `plugins/ShokoSonarr/` folder when installing manually.
 
 A [ShokoServer](https://github.com/ShokoAnime/ShokoServer) plugin that scans your anime collection for missing episodes and bridges them to [Sonarr](https://sonarr.tv/) for automated download — with a related-series discovery feed and a [Radarr](https://radarr.video/) bolt-on for movie-type suggestions.
 
@@ -15,6 +17,7 @@ Shoko tracks what anime episodes you already have. Sonarr downloads episodes for
 
 - **Scans** every already-inventoried Shoko series (on-demand from the dashboard, or on a configurable schedule) for episodes with no local file.
 - **Matches** each series to Sonarr via its TMDB-linked TVDB ID, falling back to a confirmable title search when no TVDB link exists yet — the same confirmation flow is available directly on any series with no auto-resolved match.
+- **Maps multi-cour series correctly**: Shoko's AniDB episode numbers are mapped onto Sonarr's season/episode layout via absolute episode numbers, and series are added to Sonarr as `anime` type.
 - **Bridges the gap**: adds the series to Sonarr if it isn't there yet (without triggering a full-series download), then triggers a targeted `EpisodeSearch` for just the missing episodes.
 - **Reconciles automatically**: once Shoko confirms an episode was actually imported, the plugin unmonitors it in Sonarr so Sonarr's own RSS/automatic search stops re-fetching something you already have. A stale pending search that keeps failing (e.g. the Sonarr episode was deleted out-of-band) is dropped after 14 days instead of retrying forever.
 - **Filters out noise**: optionally exclude specials (globally or per-series), and optionally hide episodes that haven't aired yet — since there's nothing for Sonarr to find until the air date passes.
@@ -23,6 +26,7 @@ Shoko tracks what anime episodes you already have. Sonarr downloads episodes for
 - **Lets a series override the global quality profile/root folder** — useful for a group that should land somewhere different than everything else.
 - **Bulk actions** — multi-select series to apply a specials override or trigger Add-to-Sonarr/Search across all of them at once.
 - **Notifies** an optional Discord-compatible webhook when a search is triggered, a movie/series discovery is added, or a stale pending entry expires.
+- **Registers native Shoko Actions**: "Scan for Missing Episodes" (global) and "Search Missing Episodes in Sonarr" (per series) appear in Shoko's Actions menu, alongside the dashboard.
 - **Shows Sonarr's live reachability** in the dashboard header at a glance, instead of only after clicking Test Connection.
 
 ## What it's not
@@ -65,19 +69,19 @@ http://<your-shoko-host>:<port>/api/plugin/ShokoSonarr/dashboard
 This repo publishes a live [`manifest.json`](manifest.json) that ShokoServer's plugin manager can consume directly as a repository. It's kept up to date automatically: every tagged GitHub release adds its own entry (version, changelog, per-runtime archive + checksum) via CI.
 
 1. In Shoko's WebUI, go to **Settings → Plugins** and add a new repository with:
-   - **Name:** `Shoko Sonarr` (or anything you like)
-   - **URL:** `https://raw.githubusercontent.com/Foowy/ShokoSonarr/master/manifest.json`
-2. Shoko fetches the manifest and lists Shoko Sonarr as an installable package — pick a release and install it from there.
+   - **Name:** `Shoko Arr` (or anything you like)
+   - **URL:** `https://raw.githubusercontent.com/Foowy/ShokoArr/master/manifest.json`
+2. Shoko fetches the manifest and lists Shoko Arr as an installable package — pick a release and install it from there.
 3. Once installed, enable **auto-upgrade** on the repository/package if you want future releases pulled in automatically; otherwise re-check the plugin manager after new releases.
 
 ### Manual deploy
 
 ```bash
-dotnet publish ShokoSonarr -c Release -o <output-dir>
-# copy <output-dir>/* into Shoko's plugins/ShokoSonarr/ directory, then restart Shoko Server
+dotnet publish ShokoArr -c Release -o <output-dir>
+# copy <output-dir>/* into Shoko's plugins/ShokoArr/ directory, then restart Shoko Server
 ```
 
-Plugin load only happens at ShokoServer startup — copying the DLL alone has no effect.
+Plugin load only happens at ShokoServer startup — copying the DLL alone has no effect. Requires a Shoko Server build with plugin Abstractions 6.0 (currently the `dev`/`daily` channel).
 
 ## Building & testing
 
@@ -86,7 +90,7 @@ dotnet build -c Release
 dotnet test -c Release
 ```
 
-83 tests cover missing-episode scanning (specials filtering, hidden/credits-type exclusion, unaired filtering, group/override propagation), Sonarr and Radarr search/reconciliation (success, failure, expiry, exception paths), the Sonarr and Radarr HTTP clients, series/movie matching, related-series discovery, notifications, and LiteDB settings persistence (including backward-compatible deserialization of pre-upgrade settings docs and cross-field override preservation).
+Over 100 tests cover missing-episode scanning (specials filtering, hidden/credits-type exclusion, unaired filtering, group/override propagation), Sonarr and Radarr search/reconciliation (success, failure, expiry, exception paths), the Sonarr and Radarr HTTP clients, series/movie matching, related-series discovery, notifications, and LiteDB settings persistence (including backward-compatible deserialization of pre-upgrade settings docs and cross-field override preservation).
 
 ## License
 
