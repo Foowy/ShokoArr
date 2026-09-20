@@ -7,7 +7,7 @@ using ShokoArr.Models;
 namespace ShokoArr.Services;
 
 /// <summary>Scans the Shoko collection for missing episodes on already-inventoried series, and reconciles previously-triggered Sonarr searches once Shoko confirms an episode was imported.</summary>
-public class MissingEpisodeScanner(IMetadataService metadataService, ScanCacheStore cacheStore, SonarrClient sonarrClient, NotificationService notificationService, ISettingsSource settingsSource)
+public class MissingEpisodeScanner(IMetadataService metadataService, ScanCacheStore cacheStore, SonarrClient sonarrClient, NotificationService notificationService, ISettingsSource settingsSource, SonarrEpisodeStatusResolver statusResolver)
 {
     private static readonly Logger s_logger = LogManager.GetCurrentClassLogger();
 
@@ -69,6 +69,7 @@ public class MissingEpisodeScanner(IMetadataService metadataService, ScanCacheSt
         var pending = cacheStore.GetPendingSearches();
         var pendingByKey = pending.ToLookup(p => (p.ShokoSeriesId, p.AnidbEpisodeId));
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var statusSession = await statusResolver.BeginAsync(settings, ct).ConfigureAwait(false);
 
         // Tracks every actually-missing episode regardless of HideUnaired, so reconciliation doesn't mistake "hidden because unaired" for "no longer missing".
         var stillMissingKeys = new HashSet<(int ShokoSeriesId, int AnidbEpisodeId)>();
@@ -91,7 +92,10 @@ public class MissingEpisodeScanner(IMetadataService metadataService, ScanCacheSt
 
             var result = BuildSeriesResult(series, inScope, settings, pendingByKey, today);
             if (result is not null)
+            {
+                await statusSession.ApplyAsync(result).ConfigureAwait(false);
                 results.Add(result);
+            }
         }
 
         var descopedKeys = new HashSet<(int ShokoSeriesId, int AnidbEpisodeId)>(missingIgnoringScope);
@@ -163,18 +167,21 @@ public class MissingEpisodeScanner(IMetadataService metadataService, ScanCacheSt
     }
 
     /// <summary>Recomputes a single series' missing-episode result, e.g. after a per-series override changed. Does not run reconciliation -- that only happens on a full <see cref="ScanAsync"/>.</summary>
-    public Task<SeriesMissingResult?> ScanSeriesAsync(int shokoSeriesId, CancellationToken ct = default)
+    public async Task<SeriesMissingResult?> ScanSeriesAsync(int shokoSeriesId, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
         var series = metadataService.GetShokoSeriesByID(shokoSeriesId);
         if (series is null
             || series.LocalEpisodeCounts.Episodes + series.LocalEpisodeCounts.Specials <= 0)
-            return Task.FromResult<SeriesMissingResult?>(null);
+            return null;
 
         var settings = settingsSource.GetSonarr();
         var pendingByKey = cacheStore.GetPendingSearches().ToLookup(p => (p.ShokoSeriesId, p.AnidbEpisodeId));
         var inScope = ScopedTo(MissingCandidates(series), series, settings);
-        return Task.FromResult(BuildSeriesResult(series, inScope, settings, pendingByKey, DateOnly.FromDateTime(DateTime.UtcNow)));
+        var result = BuildSeriesResult(series, inScope, settings, pendingByKey, DateOnly.FromDateTime(DateTime.UtcNow));
+        if (result is not null)
+            await (await statusResolver.BeginAsync(settings, ct).ConfigureAwait(false)).ApplyAsync(result).ConfigureAwait(false);
+        return result;
     }
 
     /// <summary>For each pending search whose episode is no longer in the fresh missing-episode results, tells Sonarr to unmonitor it and clears the pending entry. A failed Sonarr call is logged and left pending for the next scan — it must never fail the scan itself.

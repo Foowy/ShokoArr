@@ -39,6 +39,7 @@ public class SettingsControllerTests
         Assert.Equal("********", data.NotificationWebhookUrl);
         Assert.Equal(4, data.QualityProfileId);
         Assert.Equal(6, data.ScanIntervalHours);
+        Assert.True(data.CountSonarrHeldAsMissing);
     }
 
     [Fact]
@@ -79,5 +80,18 @@ public class SettingsControllerTests
 
         Assert.True(Assert.IsType<ShokoArrBaseController.ApiResponse<object>>(ok.Value).Success);
         Assert.Equal("secret", handler.LastRequest!.Headers.GetValues("X-Api-Key").Single());
+    }
+
+    [Fact]
+    public void SaveSettings_CountSonarrHeldAsMissingFalse_RoundTrips()
+    {
+        var source = Stored();
+        var controller = new SettingsController(source, null!);
+
+        controller.SaveSettings(new SonarrSettings { BaseUrl = "http://sonarr", CountSonarrHeldAsMissing = false });
+
+        Assert.False(source.Sonarr.CountSonarrHeldAsMissing);
+        var ok = Assert.IsType<OkObjectResult>(controller.GetSettings());
+        Assert.False(Assert.IsType<ShokoArrBaseController.ApiResponse<SonarrSettings>>(ok.Value).Data!.CountSonarrHeldAsMissing);
     }
 }

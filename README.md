@@ -20,6 +20,7 @@ Shoko tracks what anime episodes you already have. Sonarr downloads episodes for
 - **Maps multi-cour series correctly**: Shoko's AniDB episode numbers are mapped onto Sonarr's season/episode layout via absolute episode numbers, and series are added to Sonarr as `anime` type. Specials are matched to Sonarr season 0 by air date and title rather than number alone, and skipped (never searched against a mismatched episode) when no confident match exists.
 - **Bridges the gap**: adds the series to Sonarr if it isn't there yet (without triggering a full-series download), then triggers a targeted `EpisodeSearch` for just the missing episodes.
 - **Reconciles automatically**: once Shoko confirms an episode was actually imported, the plugin unmonitors it in Sonarr so Sonarr's own RSS/automatic search stops re-fetching something you already have. A stale pending search that keeps failing (e.g. the Sonarr episode was deleted out-of-band) is dropped after 14 days instead of retrying forever.
+- **Shows what Sonarr already has**: missing episodes Sonarr already has or is downloading get a badge, with a setting for whether they count as missing (held episodes are never searched).
 - **Filters out noise**: optionally exclude specials (globally or per-series), and optionally hide episodes that haven't aired yet — since there's nothing for Sonarr to find until the air date passes.
 - **Suggests what you're missing entirely**: surfaces AniDB-related series (sequels, prequels, side stories) you own zero episodes of, from series you already have. Movie-type suggestions route to Radarr; everything else routes to Sonarr, both via a confirmable title search.
 - **Propagates Shoko's group metadata as a Sonarr tag** on add, so Sonarr-side automation can key off which franchise a series belongs to. A manual "Sync Tags" action retroactively tags series added before this existed.
@@ -51,7 +52,7 @@ http://<your-shoko-host>:<port>/api/plugin/ShokoSonarr/dashboard
 - **Pending Searches** — view and cancel any in-flight Sonarr search the plugin has triggered but Shoko hasn't confirmed as imported yet.
 - **History** — a log of past outcomes (triggered, imported, cancelled, expired) for episodes that were previously pending, since Pending Searches only shows what's still in-flight.
 - **Theme picker** — System (follows OS dark/light), Ember, Deep Teal, AniBlackle, Neonglass, or Paper.
-- **Settings** - Sonarr/Radarr connection, quality profile, root folder, scan interval, specials/unaired filters and notification webhook (see First-time setup).
+- **Settings** - Sonarr/Radarr connection, quality profile, root folder, scan interval, specials/unaired filters, whether episodes already in Sonarr count as missing, and notification webhook (see First-time setup).
 
 ### First-time setup
 

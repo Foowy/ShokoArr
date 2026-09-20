@@ -49,7 +49,7 @@ public class ScanControllerTests : IDisposable
     {
         var httpClient = new HttpClient();
         var sonarrClient = new SonarrClient(httpClient);
-        var scanner = new MissingEpisodeScanner(metadataService.Object, cacheStore, sonarrClient, new NotificationService(httpClient), _settings);
+        var scanner = new MissingEpisodeScanner(metadataService.Object, cacheStore, sonarrClient, new NotificationService(httpClient), _settings, new SonarrEpisodeStatusResolver(new SonarrClient(new HttpClient())));
         return new ScanController(scanner, cacheStore, metadataService.Object, sonarrClient, new RelatedSeriesFinder(metadataService.Object), _settings)
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() },

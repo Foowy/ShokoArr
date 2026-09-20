@@ -16,6 +16,7 @@ public class ShokoArrConfigurationTests
             ScanIntervalHours = 12,
             IncludeSpecials = false,
             HideUnaired = true,
+            CountSonarrHeldAsMissing = false,
             NotificationWebhookUrl = "http://hook",
             SonarrQualityProfile = new SelectComponent<int>([new(7, "HD", isSelected: true)]),
             SonarrRootFolder = new SelectComponent<string>([new("/storage/Anime", "/storage/Anime", isSelected: true)]),
@@ -30,6 +31,7 @@ public class ShokoArrConfigurationTests
         Assert.Equal(12, settings.ScanIntervalHours);
         Assert.False(settings.IncludeSpecials);
         Assert.True(settings.HideUnaired);
+        Assert.False(settings.CountSonarrHeldAsMissing);
         Assert.Equal("http://hook", settings.NotificationWebhookUrl);
     }
 
@@ -42,6 +44,7 @@ public class ShokoArrConfigurationTests
         Assert.Null(settings.RootFolderPath);
         Assert.Equal(24, settings.ScanIntervalHours);
         Assert.True(settings.IncludeSpecials);
+        Assert.True(settings.CountSonarrHeldAsMissing);
     }
 
     [Fact]
@@ -68,7 +71,7 @@ public class ShokoArrConfigurationTests
     {
         var config = new ShokoArrConfiguration { RadarrUrl = "http://radarr", RadarrApiKey = "rk" };
 
-        config.ApplySonarr(new SonarrSettings { BaseUrl = "http://s", ApiKey = "k", QualityProfileId = 3, RootFolderPath = "/a", ScanIntervalHours = 1000, IncludeSpecials = false, HideUnaired = true, NotificationWebhookUrl = "http://h" });
+        config.ApplySonarr(new SonarrSettings { BaseUrl = "http://s", ApiKey = "k", QualityProfileId = 3, RootFolderPath = "/a", ScanIntervalHours = 1000, IncludeSpecials = false, HideUnaired = true, CountSonarrHeldAsMissing = false, NotificationWebhookUrl = "http://h" });
 
         var s = config.ToSonarrSettings();
         Assert.Equal("http://s", s.BaseUrl);
@@ -78,6 +81,7 @@ public class ShokoArrConfigurationTests
         Assert.Equal(720, s.ScanIntervalHours);
         Assert.False(s.IncludeSpecials);
         Assert.True(s.HideUnaired);
+        Assert.False(s.CountSonarrHeldAsMissing);
         Assert.Equal("http://h", s.NotificationWebhookUrl);
         Assert.Equal("http://radarr", config.RadarrUrl);
         Assert.Equal("rk", config.RadarrApiKey);

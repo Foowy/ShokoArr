@@ -24,6 +24,9 @@ public class SonarrSettings : IArrSettings
     /// <summary>Whether to exclude episodes that haven't aired yet (a future air date, or no air date at all) from missing-episode results. Defaults to false (matches pre-existing behavior).</summary>
     public bool HideUnaired { get; set; }
 
+    /// <summary>Whether episodes Sonarr already has or is downloading still count as missing on the dashboard. Defaults to true (matches pre-existing behavior).</summary>
+    public bool CountSonarrHeldAsMissing { get; set; } = true;
+
     /// <summary>Discord-compatible webhook URL (posts a JSON body with a "content" field) to notify on search-triggered and expired-pending events. Null/empty disables notifications.</summary>
     public string? NotificationWebhookUrl { get; set; }
 }

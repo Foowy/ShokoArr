@@ -415,6 +415,18 @@ button.primary:hover { background: var(--amber-dim); color: var(--ink); }
   flex-shrink: 0;
 }
 .episode-row .status.search-triggered { color: var(--teal); }
+.sonarr-badge {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 1px solid;
+  border-radius: 3px;
+  padding: 0 0.4em;
+  margin-right: 0.6em;
+}
+.sonarr-badge.downloaded { color: var(--teal); border-color: var(--teal); }
+.sonarr-badge.downloading { color: var(--amber); border-color: var(--amber); }
 
 .row-actions {
   max-height: 0;
