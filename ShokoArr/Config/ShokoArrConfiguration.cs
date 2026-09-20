@@ -92,7 +92,7 @@ public class ShokoArrConfiguration : IConfiguration
         var options = ArrOptionsLoader.LoadAsync(context.PluginManager.GetRequiredService<SonarrClient>(), ToSonarrSettings()).GetAwaiter().GetResult();
         if (!options.Success)
         {
-            context.Logger.LogWarning("Sonarr connection test failed: {Error}", options.ErrorMessage);
+            context.Logger.LogWarning("Sonarr connection test failed: {Error}", options.ErrorMessage!.Replace("\r", "").Replace("\n", " "));
             return new($"Could not reach Sonarr: {options.ErrorMessage}", DisplayColorTheme.Warning);
         }
 
@@ -106,7 +106,7 @@ public class ShokoArrConfiguration : IConfiguration
         var options = ArrOptionsLoader.LoadAsync(context.PluginManager.GetRequiredService<RadarrClient>(), ToRadarrSettings()).GetAwaiter().GetResult();
         if (!options.Success)
         {
-            context.Logger.LogWarning("Radarr connection test failed: {Error}", options.ErrorMessage);
+            context.Logger.LogWarning("Radarr connection test failed: {Error}", options.ErrorMessage!.Replace("\r", "").Replace("\n", " "));
             return new($"Could not reach Radarr: {options.ErrorMessage}", DisplayColorTheme.Warning);
         }
 

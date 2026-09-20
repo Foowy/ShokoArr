@@ -51,7 +51,7 @@ http://<your-shoko-host>:<port>/api/plugin/ShokoSonarr/dashboard
 - **Pending Searches** — view and cancel any in-flight Sonarr search the plugin has triggered but Shoko hasn't confirmed as imported yet.
 - **History** — a log of past outcomes (triggered, imported, cancelled, expired) for episodes that were previously pending, since Pending Searches only shows what's still in-flight.
 - **Theme picker** — System (follows OS dark/light), Ember, Deep Teal, AniBlackle, or Paper.
-- **Settings** — moved to Shoko's native plugin configuration (see First-time setup); the dashboard only links there.
+- **Settings** - moved to Shoko's native plugin configuration (see First-time setup); the dashboard only links there.
 
 ### First-time setup
 

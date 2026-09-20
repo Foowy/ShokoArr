@@ -57,4 +57,16 @@ public class LegacySettingsMigratorTests
     {
         Assert.False(LegacySettingsMigrator.TryMigrate(new SonarrSettings(), new RadarrSettings(), new ShokoArrConfiguration()));
     }
+
+    [Theory]
+    [InlineData(1000, 720)]
+    [InlineData(-5, 0)]
+    public void TryMigrate_ScanIntervalOutOfRange_IsClamped(int legacy, int expected)
+    {
+        var target = new ShokoArrConfiguration();
+
+        LegacySettingsMigrator.TryMigrate(new SonarrSettings { BaseUrl = "http://s", ScanIntervalHours = legacy }, new RadarrSettings(), target);
+
+        Assert.Equal(expected, target.ScanIntervalHours);
+    }
 }

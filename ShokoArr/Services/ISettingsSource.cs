@@ -1,3 +1,4 @@
+using NLog;
 using Shoko.Abstractions.Config.Services;
 using ShokoArr.Config;
 
@@ -12,6 +13,7 @@ public interface ISettingsSource
 
 public class NativeSettingsSource(IConfigurationService configurationService, ScanCacheStore legacyStore) : ISettingsSource
 {
+    private static readonly Logger s_logger = LogManager.GetCurrentClassLogger();
     private readonly RetryOnceGate _migration = new();
 
     public SonarrSettings GetSonarr() => Load().ToSonarrSettings();
@@ -22,9 +24,16 @@ public class NativeSettingsSource(IConfigurationService configurationService, Sc
     {
         _migration.Run(() =>
         {
-            var config = configurationService.Load<ShokoArrConfiguration>(copy: true);
-            if (LegacySettingsMigrator.TryMigrate(legacyStore.GetLegacySettings(), legacyStore.GetLegacyRadarrSettings(), config))
-                configurationService.Save(config);
+            try
+            {
+                var config = configurationService.Load<ShokoArrConfiguration>(copy: true);
+                if (LegacySettingsMigrator.TryMigrate(legacyStore.GetLegacySettings(), legacyStore.GetLegacyRadarrSettings(), config))
+                    configurationService.Save(config);
+            }
+            catch (Exception ex)
+            {
+                s_logger.Warn(ex, "ShokoArr: could not migrate legacy settings, continuing with native configuration as-is: {Error}", ex.Message.Replace("\r", "").Replace("\n", " "));
+            }
         });
         return configurationService.Load<ShokoArrConfiguration>();
     }

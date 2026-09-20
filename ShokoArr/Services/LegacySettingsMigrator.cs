@@ -16,7 +16,7 @@ public static class LegacySettingsMigrator
         target.SonarrApiKey = sonarr.ApiKey;
         target.SonarrQualityProfile = ProfileSelection(sonarr.QualityProfileId);
         target.SonarrRootFolder = FolderSelection(sonarr.RootFolderPath);
-        target.ScanIntervalHours = sonarr.ScanIntervalHours;
+        target.ScanIntervalHours = Math.Clamp(sonarr.ScanIntervalHours, 0, 720);
         target.IncludeSpecials = sonarr.IncludeSpecials;
         target.HideUnaired = sonarr.HideUnaired;
         target.NotificationWebhookUrl = sonarr.NotificationWebhookUrl;
