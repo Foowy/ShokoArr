@@ -27,7 +27,7 @@ public class SonarrSearchService(SonarrClient sonarrClient, ScanCacheStore cache
         foreach (var ep in targetEpisodes)
         {
             SonarrEpisodeResource? match = ep.IsSpecial
-                ? episodesResult.Data!.Find(se => se.SeasonNumber == 0 && se.EpisodeNumber == ep.EpisodeNumber)
+                ? SpecialMatcher.Match(episodesResult.Data!, ep)
                 : anySonarrAbsolute
                     ? episodesResult.Data!.Find(se => se.AbsoluteEpisodeNumber == ep.EpisodeNumber)
                     : episodesResult.Data!.Find(se => se.SeasonNumber == 1 && se.EpisodeNumber == ep.EpisodeNumber);

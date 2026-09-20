@@ -17,7 +17,7 @@ Shoko tracks what anime episodes you already have. Sonarr downloads episodes for
 
 - **Scans** every already-inventoried Shoko series (on-demand from the dashboard, or on a configurable schedule) for episodes with no local file.
 - **Matches** each series to Sonarr via its TMDB-linked TVDB ID, falling back to a confirmable title search when no TVDB link exists yet — the same confirmation flow is available directly on any series with no auto-resolved match.
-- **Maps multi-cour series correctly**: Shoko's AniDB episode numbers are mapped onto Sonarr's season/episode layout via absolute episode numbers, and series are added to Sonarr as `anime` type.
+- **Maps multi-cour series correctly**: Shoko's AniDB episode numbers are mapped onto Sonarr's season/episode layout via absolute episode numbers, and series are added to Sonarr as `anime` type. Specials are matched to Sonarr season 0 by air date and title rather than number alone, and skipped (never searched against a mismatched episode) when no confident match exists.
 - **Bridges the gap**: adds the series to Sonarr if it isn't there yet (without triggering a full-series download), then triggers a targeted `EpisodeSearch` for just the missing episodes.
 - **Reconciles automatically**: once Shoko confirms an episode was actually imported, the plugin unmonitors it in Sonarr so Sonarr's own RSS/automatic search stops re-fetching something you already have. A stale pending search that keeps failing (e.g. the Sonarr episode was deleted out-of-band) is dropped after 14 days instead of retrying forever.
 - **Filters out noise**: optionally exclude specials (globally or per-series), and optionally hide episodes that haven't aired yet — since there's nothing for Sonarr to find until the air date passes.

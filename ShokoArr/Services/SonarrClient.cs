@@ -13,7 +13,9 @@ public record SonarrEpisodeResource(
     [property: JsonPropertyName("id")] int Id,
     [property: JsonPropertyName("seasonNumber")] int SeasonNumber,
     [property: JsonPropertyName("episodeNumber")] int EpisodeNumber,
-    [property: JsonPropertyName("absoluteEpisodeNumber")] int? AbsoluteEpisodeNumber = null);
+    [property: JsonPropertyName("absoluteEpisodeNumber")] int? AbsoluteEpisodeNumber = null,
+    [property: JsonPropertyName("title")] string? Title = null,
+    [property: JsonPropertyName("airDate")] string? AirDate = null);
 
 /// <summary>Sonarr quality profile resource, as returned by Sonarr's v3 API.</summary>
 public record ArrQualityProfileResource(
