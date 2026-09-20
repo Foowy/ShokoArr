@@ -9,12 +9,6 @@ namespace ShokoArr.Controllers.Api;
 /// <param name="AnidbEpisodeIds">The specific missing episodes (by AniDB episode ID) to monitor and search for.</param>
 public record AddAndSearchRequest(int ShokoSeriesId, int TvdbId, List<int> AnidbEpisodeIds);
 
-/// <summary>Request body for triggering search on a series already present in Sonarr.</summary>
-/// <param name="ShokoSeriesId">The Shoko series ID (must be present in the last scan snapshot).</param>
-/// <param name="SonarrSeriesId">The existing Sonarr series ID.</param>
-/// <param name="AnidbEpisodeIds">The specific missing episodes (by AniDB episode ID) to monitor and search for.</param>
-public record SearchRequest(int ShokoSeriesId, int SonarrSeriesId, List<int> AnidbEpisodeIds);
-
 /// <summary>Request body for a Sonarr title search on a series not yet in Shoko's scan snapshot (e.g. a discovery suggestion).</summary>
 /// <param name="Title">The title to search for.</param>
 public record SearchTitleRequest(string Title);
@@ -144,21 +138,6 @@ public class SonarrController(SeriesMatcher matcher, SonarrSearchService searchS
             return Conflict(new ApiResponse<object>(Success: false, Message: added.ErrorMessage, Data: null));
 
         return await MonitorAndSearchAsync(settings, request.ShokoSeriesId, added.Data!.Id, added.Data.TitleSlug, request.AnidbEpisodeIds, series);
-    }
-
-    /// <summary>Monitors and searches for the given missing episodes on a series already present in Sonarr.</summary>
-    /// <param name="request">The search request.</param>
-    /// <returns>200 on success, 409/400 with a message describing what failed.</returns>
-    [HttpPost("search")]
-    public async Task<IActionResult> Search([FromBody] SearchRequest request)
-    {
-        var snapshot = cacheStore.GetLastScan();
-        var series = snapshot?.Series.Find(s => s.ShokoSeriesId == request.ShokoSeriesId);
-        if (series is null)
-            return NotFound(new ApiResponse<object>(Success: false, Message: "Series not found in the last scan.", Data: null));
-
-        var settings = cacheStore.GetSettings();
-        return await MonitorAndSearchAsync(settings, request.ShokoSeriesId, request.SonarrSeriesId, null, request.AnidbEpisodeIds, series);
     }
 
     /// <summary>Monitors and searches for the given missing episodes on a Sonarr series, via <see cref="SonarrSearchService.MonitorAndSearchAsync"/>.</summary>

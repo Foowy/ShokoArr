@@ -42,4 +42,15 @@ public class SearchHistoryEntry
 
     /// <summary>When this event occurred, in UTC.</summary>
     public DateTime TimestampUtc { get; set; }
+
+    /// <summary>Builds the history record for a pending search that has reached <paramref name="outcome"/>.</summary>
+    public static SearchHistoryEntry From(PendingSearch pending, SearchHistoryOutcome outcome, DateTime? timestampUtc = null) => new()
+    {
+        ShokoSeriesId = pending.ShokoSeriesId,
+        SeriesTitle = pending.SeriesTitle,
+        AnidbEpisodeId = pending.AnidbEpisodeId,
+        EpisodeTitle = pending.EpisodeTitle,
+        Outcome = outcome,
+        TimestampUtc = timestampUtc ?? DateTime.UtcNow,
+    };
 }

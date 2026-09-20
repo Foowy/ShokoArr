@@ -82,12 +82,14 @@ public class MissingEpisodeScanner(IMetadataService metadataService, ScanCacheSt
             if (series.LocalEpisodeCounts.Episodes + series.LocalEpisodeCounts.Specials <= 0)
                 continue;
 
-            foreach (var key in EnumerateMissingKeys(series, settings))
-                stillMissingKeys.Add(key);
-            foreach (var e in series.Episodes.Where(e => (e.Type == EpisodeType.Episode || e.Type == EpisodeType.Special) && IsMissingVideo(e)))
+            var candidates = MissingCandidates(series);
+            var inScope = ScopedTo(candidates, series, settings);
+            foreach (var e in candidates)
                 missingIgnoringScope.Add((series.ID, e.AnidbEpisodeID));
+            foreach (var e in inScope)
+                stillMissingKeys.Add((series.ID, e.AnidbEpisodeID));
 
-            var result = BuildSeriesResult(series, settings, pendingByKey, today);
+            var result = BuildSeriesResult(series, inScope, settings, pendingByKey, today);
             if (result is not null)
                 results.Add(result);
         }
@@ -107,31 +109,24 @@ public class MissingEpisodeScanner(IMetadataService metadataService, ScanCacheSt
     /// <summary>An episode Shoko knows about but has no file for, and that isn't user-hidden — i.e. a candidate for a Sonarr search. Type-filtering (specials scope) is applied separately by each caller.</summary>
     private static bool IsMissingVideo(IShokoEpisode e) => !e.IsHidden && e.Videos.Count == 0;
 
-    /// <summary>The scanned episode types for a series, honoring the global setting and any per-series specials override.</summary>
-    private EpisodeType[] ScannedTypesFor(IShokoSeries series, Config.SonarrSettings settings)
+    /// <summary>Every episode or special of a series with no file that isn't user-hidden, regardless of the specials scope.</summary>
+    private static List<IShokoEpisode> MissingCandidates(IShokoSeries series) =>
+        [.. series.Episodes.Where(e => (e.Type == EpisodeType.Episode || e.Type == EpisodeType.Special) && IsMissingVideo(e))];
+
+    /// <summary>Narrows candidates to the scanned types for a series, honoring the global specials setting and any per-series override.</summary>
+    private IEnumerable<IShokoEpisode> ScopedTo(List<IShokoEpisode> candidates, IShokoSeries series, Config.SonarrSettings settings)
     {
         var includeSpecials = cacheStore.GetSeriesOverride(series.ID)?.IncludeSpecials ?? settings.IncludeSpecials;
-        return includeSpecials ? [EpisodeType.Episode, EpisodeType.Special] : [EpisodeType.Episode];
-    }
-
-    /// <summary>Every actually-missing episode key for a series, ignoring the HideUnaired display filter.</summary>
-    private IEnumerable<(int ShokoSeriesId, int AnidbEpisodeId)> EnumerateMissingKeys(IShokoSeries series, Config.SonarrSettings settings)
-    {
-        var scannedTypes = ScannedTypesFor(series, settings);
-        return series.Episodes
-            .Where(e => scannedTypes.Contains(e.Type) && IsMissingVideo(e))
-            .Select(e => (series.ID, e.AnidbEpisodeID));
+        return includeSpecials ? candidates : candidates.Where(e => e.Type == EpisodeType.Episode);
     }
 
     /// <summary>Builds the missing-episode result for one series, or null if it has nothing missing after the specials scope and HideUnaired filters.</summary>
-    private SeriesMissingResult? BuildSeriesResult(IShokoSeries series, Config.SonarrSettings settings, ILookup<(int, int), PendingSearch> pendingByKey, DateOnly today)
+    private SeriesMissingResult? BuildSeriesResult(IShokoSeries series, IEnumerable<IShokoEpisode> inScope, Config.SonarrSettings settings, ILookup<(int, int), PendingSearch> pendingByKey, DateOnly today)
     {
         var seriesOverride = cacheStore.GetSeriesOverride(series.ID);
         var overrideValue = seriesOverride?.IncludeSpecials;
-        var scannedTypes = ScannedTypesFor(series, settings);
 
-        var missing = series.Episodes
-            .Where(e => scannedTypes.Contains(e.Type) && IsMissingVideo(e))
+        var missing = inScope
             .Select(e => new MissingEpisodeInfo
             {
                 AnidbEpisodeId = e.AnidbEpisodeID,
@@ -178,7 +173,8 @@ public class MissingEpisodeScanner(IMetadataService metadataService, ScanCacheSt
 
         var settings = cacheStore.GetSettings();
         var pendingByKey = cacheStore.GetPendingSearches().ToLookup(p => (p.ShokoSeriesId, p.AnidbEpisodeId));
-        return Task.FromResult(BuildSeriesResult(series, settings, pendingByKey, DateOnly.FromDateTime(DateTime.UtcNow)));
+        var inScope = ScopedTo(MissingCandidates(series), series, settings);
+        return Task.FromResult(BuildSeriesResult(series, inScope, settings, pendingByKey, DateOnly.FromDateTime(DateTime.UtcNow)));
     }
 
     /// <summary>For each pending search whose episode is no longer in the fresh missing-episode results, tells Sonarr to unmonitor it and clears the pending entry. A failed Sonarr call is logged and left pending for the next scan — it must never fail the scan itself.
@@ -201,17 +197,8 @@ public class MissingEpisodeScanner(IMetadataService metadataService, ScanCacheSt
                 if (result.Success)
                 {
                     cacheStore.RemovePendingSearch(entry.ShokoSeriesId, entry.AnidbEpisodeId);
-                    cacheStore.AddHistoryEntry(new SearchHistoryEntry
-                    {
-                        ShokoSeriesId = entry.ShokoSeriesId,
-                        SeriesTitle = entry.SeriesTitle,
-                        AnidbEpisodeId = entry.AnidbEpisodeId,
-                        EpisodeTitle = entry.EpisodeTitle,
-                        Outcome = descopedKeys.Contains((entry.ShokoSeriesId, entry.AnidbEpisodeId))
-                            ? SearchHistoryOutcome.Descoped
-                            : SearchHistoryOutcome.Imported,
-                        TimestampUtc = DateTime.UtcNow,
-                    });
+                    var outcome = descopedKeys.Contains((entry.ShokoSeriesId, entry.AnidbEpisodeId)) ? SearchHistoryOutcome.Descoped : SearchHistoryOutcome.Imported;
+                    cacheStore.AddHistoryEntry(SearchHistoryEntry.From(entry, outcome));
                 }
                 else
                 {
@@ -239,15 +226,7 @@ public class MissingEpisodeScanner(IMetadataService metadataService, ScanCacheSt
 
         s_logger.Warn("ShokoArr: giving up on Sonarr episode {SonarrEpisodeId} for AniDB episode {AnidbEpisodeId} after {MaxPendingAge} of failed reconciliation attempts", entry.SonarrEpisodeId, entry.AnidbEpisodeId, MaxPendingAge);
         cacheStore.RemovePendingSearch(entry.ShokoSeriesId, entry.AnidbEpisodeId);
-        cacheStore.AddHistoryEntry(new SearchHistoryEntry
-        {
-            ShokoSeriesId = entry.ShokoSeriesId,
-            SeriesTitle = entry.SeriesTitle,
-            AnidbEpisodeId = entry.AnidbEpisodeId,
-            EpisodeTitle = entry.EpisodeTitle,
-            Outcome = SearchHistoryOutcome.Expired,
-            TimestampUtc = DateTime.UtcNow,
-        });
+        cacheStore.AddHistoryEntry(SearchHistoryEntry.From(entry, SearchHistoryOutcome.Expired));
 
         var seriesLabel = string.IsNullOrEmpty(entry.SeriesTitle) ? $"series #{entry.ShokoSeriesId}" : entry.SeriesTitle;
         var episodeLabel = string.IsNullOrEmpty(entry.EpisodeTitle) ? $"AniDB episode {entry.AnidbEpisodeId}" : entry.EpisodeTitle;

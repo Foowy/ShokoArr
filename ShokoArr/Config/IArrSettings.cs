@@ -1,0 +1,9 @@
+namespace ShokoArr.Config;
+
+/// <summary>The connection details shared by Sonarr and Radarr settings.</summary>
+public interface IArrSettings
+{
+    string? BaseUrl { get; }
+
+    string? ApiKey { get; }
+}

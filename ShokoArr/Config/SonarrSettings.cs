@@ -1,7 +1,7 @@
 namespace ShokoArr.Config;
 
 /// <summary>User-configured connection details and scan cadence for Sonarr integration.</summary>
-public class SonarrSettings
+public class SonarrSettings : IArrSettings
 {
     /// <summary>Base URL of the Sonarr instance, e.g. "http://192.168.1.40:8989".</summary>
     public string? BaseUrl { get; set; }
