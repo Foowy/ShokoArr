@@ -14,6 +14,34 @@
   "image_url": "https://raw.githubusercontent.com/Foowy/ShokoArr/master/assets/master_shokosonarr.png",
   "releases": [
     {
+      "version": "0.6.0",
+      "tag": "v0.6.0",
+      "source_revision": "e78c89e95aefe6d5eb39f343c911def038284f4e",
+      "released_at": "2026-09-20T13:06:14Z",
+      "channel": "Stable",
+      "release_notes": "## What's Changed\n* Bump the nuget group with 1 update by @dependabot[bot] in https://github.com/Foowy/ShokoArr/pull/38\n* Bump the nuget group with 3 updates by @dependabot[bot] in https://github.com/Foowy/ShokoArr/pull/39\n* chore(deps): bump github/codeql-action from 4.37.9 to 4.38.0 by @dependabot[bot] in https://github.com/Foowy/ShokoArr/pull/37\n* chore: rename project and plugin to ShokoArr by @Foowy in https://github.com/Foowy/ShokoArr/pull/40\n* chore: match host Shoko.Abstractions alpha.92 and Asp.Versioning 10.2.1 by @Foowy in https://github.com/Foowy/ShokoArr/pull/41\n* feat: add \"View in Sonarr\" deep link on pending searches by @Foowy in https://github.com/Foowy/ShokoArr/pull/43\n* chore: bump version to 0.6.0 by @Foowy in https://github.com/Foowy/ShokoArr/pull/44\n\n\n**Full Changelog**: https://github.com/Foowy/ShokoArr/compare/v0.5.0...v0.6.0",
+      "archives": [
+        {
+          "runtime": "linux-arm64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/ShokoArr/releases/download/v0.6.0/ShokoArr-v0.6.0_linux-arm64.zip",
+          "checksum": "4fa3e02ee9b22ca447004bfa661c9b04bb78c3b07b54a157c06b3a20caafa707"
+        },
+        {
+          "runtime": "linux-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/ShokoArr/releases/download/v0.6.0/ShokoArr-v0.6.0_linux-x64.zip",
+          "checksum": "d617fb8ffe55546c23b000ec17f4ddde932f1d986631aebcf5b58a200103c917"
+        },
+        {
+          "runtime": "win-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/ShokoArr/releases/download/v0.6.0/ShokoArr-v0.6.0_win-x64.zip",
+          "checksum": "66fac3dfab2b0adbeb03c78258d4efbd6ba21854d74487d6f0ecb87e1e2572a1"
+        }
+      ]
+    },
+    {
       "version": "0.5.0",
       "tag": "v0.5.0",
       "source_revision": "e59f7a10e34356419c632436761979d7f0d5a5e6",
