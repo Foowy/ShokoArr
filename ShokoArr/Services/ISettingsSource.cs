@@ -10,9 +10,23 @@ public interface ISettingsSource
     RadarrSettings GetRadarr();
 }
 
-public class NativeSettingsSource(IConfigurationService configurationService) : ISettingsSource
+public class NativeSettingsSource(IConfigurationService configurationService, ScanCacheStore legacyStore) : ISettingsSource
 {
-    public SonarrSettings GetSonarr() => configurationService.Load<ShokoArrConfiguration>().ToSonarrSettings();
+    private readonly Lazy<bool> _migrated = new(() =>
+    {
+        var config = configurationService.Load<ShokoArrConfiguration>(copy: true);
+        if (LegacySettingsMigrator.TryMigrate(legacyStore.GetLegacySettings(), legacyStore.GetLegacyRadarrSettings(), config))
+            configurationService.Save(config);
+        return true;
+    });
 
-    public RadarrSettings GetRadarr() => configurationService.Load<ShokoArrConfiguration>().ToRadarrSettings();
+    public SonarrSettings GetSonarr() => Load().ToSonarrSettings();
+
+    public RadarrSettings GetRadarr() => Load().ToRadarrSettings();
+
+    private ShokoArrConfiguration Load()
+    {
+        _ = _migrated.Value;
+        return configurationService.Load<ShokoArrConfiguration>();
+    }
 }

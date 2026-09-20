@@ -12,7 +12,7 @@ public class SettingsController(ScanCacheStore cacheStore, SonarrClient sonarrCl
     [HttpGet]
     public IActionResult GetSettings()
     {
-        var settings = cacheStore.GetSettings();
+        var settings = cacheStore.GetLegacySettings();
         var masked = new SonarrSettings
         {
             BaseUrl = settings.BaseUrl,
@@ -35,7 +35,7 @@ public class SettingsController(ScanCacheStore cacheStore, SonarrClient sonarrCl
     [HttpPut]
     public IActionResult SaveSettings([FromBody] SonarrSettings settings)
     {
-        var stored = cacheStore.GetSettings();
+        var stored = cacheStore.GetLegacySettings();
         if (string.IsNullOrEmpty(settings.ApiKey))
             settings.ApiKey = stored.ApiKey;
         if (settings.QualityProfileId is null)
@@ -57,7 +57,7 @@ public class SettingsController(ScanCacheStore cacheStore, SonarrClient sonarrCl
     public async Task<IActionResult> TestConnection([FromBody] SonarrSettings settings)
     {
         if (string.IsNullOrEmpty(settings.ApiKey))
-            settings.ApiKey = cacheStore.GetSettings().ApiKey;
+            settings.ApiKey = cacheStore.GetLegacySettings().ApiKey;
 
         var result = await sonarrClient.TestConnectionAsync(settings);
         return Ok(new ApiResponse<object>(Success: result.Success, Message: result.ErrorMessage, Data: null));
@@ -68,7 +68,7 @@ public class SettingsController(ScanCacheStore cacheStore, SonarrClient sonarrCl
     [HttpGet("health")]
     public async Task<IActionResult> GetHealth()
     {
-        var result = await sonarrClient.TestConnectionAsync(cacheStore.GetSettings());
+        var result = await sonarrClient.TestConnectionAsync(cacheStore.GetLegacySettings());
         return Ok(new ApiResponse<object>(Success: result.Success, Message: result.ErrorMessage, Data: null));
     }
 
@@ -77,7 +77,7 @@ public class SettingsController(ScanCacheStore cacheStore, SonarrClient sonarrCl
     [HttpGet("quality-profile")]
     public async Task<IActionResult> GetSavedQualityProfile()
     {
-        var settings = cacheStore.GetSettings();
+        var settings = cacheStore.GetLegacySettings();
         if (settings.QualityProfileId is null)
             return Ok(new ApiResponse<object>(Success: false, Message: "No quality profile saved.", Data: null));
 
@@ -98,7 +98,7 @@ public class SettingsController(ScanCacheStore cacheStore, SonarrClient sonarrCl
     public async Task<IActionResult> GetSonarrOptions([FromBody] SonarrSettings settings)
     {
         if (string.IsNullOrEmpty(settings.ApiKey))
-            settings.ApiKey = cacheStore.GetSettings().ApiKey;
+            settings.ApiKey = cacheStore.GetLegacySettings().ApiKey;
 
         var profiles = await sonarrClient.GetQualityProfilesAsync(settings);
         if (!profiles.Success)

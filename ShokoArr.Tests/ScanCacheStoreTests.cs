@@ -27,7 +27,7 @@ public class ScanCacheStoreTests : IDisposable
     [Fact]
     public void GetSettings_WhenNoneSaved_ReturnsDefaults()
     {
-        var settings = _store.GetSettings();
+        var settings = _store.GetLegacySettings();
 
         Assert.Null(settings.BaseUrl);
         Assert.Equal(24, settings.ScanIntervalHours);
@@ -38,7 +38,7 @@ public class ScanCacheStoreTests : IDisposable
     {
         _store.SaveSettings(new SonarrSettings { BaseUrl = "http://sonarr:8989", ApiKey = "abc123", ScanIntervalHours = 12 });
 
-        var settings = _store.GetSettings();
+        var settings = _store.GetLegacySettings();
 
         Assert.Equal("http://sonarr:8989", settings.BaseUrl);
         Assert.Equal("abc123", settings.ApiKey);
@@ -50,7 +50,7 @@ public class ScanCacheStoreTests : IDisposable
     {
         _store.SaveRadarrSettings(new RadarrSettings { BaseUrl = "http://radarr:7878", ApiKey = "xyz789", QualityProfileId = 3, RootFolderPath = "/movies" });
 
-        var settings = _store.GetRadarrSettings();
+        var settings = _store.GetLegacyRadarrSettings();
 
         Assert.Equal("http://radarr:7878", settings.BaseUrl);
         Assert.Equal("xyz789", settings.ApiKey);
@@ -61,7 +61,7 @@ public class ScanCacheStoreTests : IDisposable
     [Fact]
     public void GetRadarrSettings_WhenNoneSaved_ReturnsDefaults()
     {
-        var settings = _store.GetRadarrSettings();
+        var settings = _store.GetLegacyRadarrSettings();
 
         Assert.Null(settings.BaseUrl);
         Assert.Null(settings.QualityProfileId);
@@ -72,7 +72,7 @@ public class ScanCacheStoreTests : IDisposable
     {
         _store.SaveSettings(new SonarrSettings { IncludeSpecials = false });
 
-        var settings = _store.GetSettings();
+        var settings = _store.GetLegacySettings();
 
         Assert.False(settings.IncludeSpecials);
     }
@@ -214,7 +214,7 @@ public class ScanCacheStoreTests : IDisposable
         try
         {
             using var store = new ScanCacheStore(tempDir);
-            Assert.True(store.GetSettings().IncludeSpecials);
+            Assert.True(store.GetLegacySettings().IncludeSpecials);
         }
         finally
         {

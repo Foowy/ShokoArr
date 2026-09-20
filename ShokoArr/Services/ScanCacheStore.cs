@@ -37,7 +37,8 @@ public class ScanCacheStore : IDisposable
     public void Dispose() => _db.Dispose();
 
     /// <summary>Gets the current Sonarr settings, or defaults if none have been saved.</summary>
-    public SonarrSettings GetSettings()
+    // Read-only migration source; the native configuration is authoritative.
+    public SonarrSettings GetLegacySettings()
     {
         var col = _db.GetCollection<SettingsDocument>(SettingsCollectionName);
         var doc = col.FindById(SettingsDocumentId);
@@ -52,7 +53,8 @@ public class ScanCacheStore : IDisposable
     }
 
     /// <summary>Gets the current Radarr settings, or defaults if none have been saved.</summary>
-    public RadarrSettings GetRadarrSettings()
+    // Read-only migration source; the native configuration is authoritative.
+    public RadarrSettings GetLegacyRadarrSettings()
     {
         var col = _db.GetCollection<RadarrSettingsDocument>(RadarrSettingsCollectionName);
         var doc = col.FindById(SettingsDocumentId);

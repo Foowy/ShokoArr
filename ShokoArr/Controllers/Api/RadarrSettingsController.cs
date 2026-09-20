@@ -11,7 +11,7 @@ public class RadarrSettingsController(ScanCacheStore cacheStore, RadarrClient ra
     [HttpGet]
     public IActionResult GetSettings()
     {
-        var settings = cacheStore.GetRadarrSettings();
+        var settings = cacheStore.GetLegacyRadarrSettings();
         var masked = new RadarrSettings
         {
             BaseUrl = settings.BaseUrl,
@@ -26,7 +26,7 @@ public class RadarrSettingsController(ScanCacheStore cacheStore, RadarrClient ra
     [HttpPut]
     public IActionResult SaveSettings([FromBody] RadarrSettings settings)
     {
-        var stored = cacheStore.GetRadarrSettings();
+        var stored = cacheStore.GetLegacyRadarrSettings();
         if (string.IsNullOrEmpty(settings.ApiKey))
             settings.ApiKey = stored.ApiKey;
         if (settings.QualityProfileId is null)
@@ -43,7 +43,7 @@ public class RadarrSettingsController(ScanCacheStore cacheStore, RadarrClient ra
     public async Task<IActionResult> TestConnection([FromBody] RadarrSettings settings)
     {
         if (string.IsNullOrEmpty(settings.ApiKey))
-            settings.ApiKey = cacheStore.GetRadarrSettings().ApiKey;
+            settings.ApiKey = cacheStore.GetLegacyRadarrSettings().ApiKey;
 
         var result = await radarrClient.TestConnectionAsync(settings);
         return Ok(new ApiResponse<object>(Success: result.Success, Message: result.ErrorMessage, Data: null));
@@ -54,7 +54,7 @@ public class RadarrSettingsController(ScanCacheStore cacheStore, RadarrClient ra
     public async Task<IActionResult> GetRadarrOptions([FromBody] RadarrSettings settings)
     {
         if (string.IsNullOrEmpty(settings.ApiKey))
-            settings.ApiKey = cacheStore.GetRadarrSettings().ApiKey;
+            settings.ApiKey = cacheStore.GetLegacyRadarrSettings().ApiKey;
 
         var profiles = await radarrClient.GetQualityProfilesAsync(settings);
         if (!profiles.Success)
