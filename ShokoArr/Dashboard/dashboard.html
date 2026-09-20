@@ -28,8 +28,8 @@
     <div class="settings-section">
       <h2>Sonarr Connection</h2>
       <div class="settings-grid">
-        <label>Base URL <input id="settings-url" type="text" placeholder="http://192.168.1.40:8989" /></label>
-        <label>API Key <input id="settings-key" type="password" /></label>
+        <label>Base URL <input id="settings-url" type="text" autocomplete="off" placeholder="http://192.168.1.40:8989" /></label>
+        <label>API Key <input id="settings-key" type="password" autocomplete="new-password" /></label>
         <label>Quality Profile <select id="settings-quality-profile"></select></label>
         <label>Root Folder <select id="settings-root-folder"></select></label>
       </div>
@@ -41,8 +41,8 @@
     <div class="settings-section">
       <h2>Radarr Connection</h2>
       <div class="settings-grid">
-        <label>Base URL <input id="radarr-settings-url" type="text" placeholder="http://192.168.1.60:7878" /></label>
-        <label>API Key <input id="radarr-settings-key" type="password" /></label>
+        <label>Base URL <input id="radarr-settings-url" type="text" autocomplete="off" placeholder="http://192.168.1.60:7878" /></label>
+        <label>API Key <input id="radarr-settings-key" type="password" autocomplete="new-password" /></label>
         <label>Quality Profile <select id="radarr-settings-quality-profile"></select></label>
         <label>Root Folder <select id="radarr-settings-root-folder"></select></label>
       </div>
@@ -72,7 +72,7 @@
         </label>
         <label><input id="settings-include-specials" type="checkbox" /> Include Specials</label>
         <label><input id="settings-hide-unaired" type="checkbox" /> Hide Unaired Episodes</label>
-        <label>Notification Webhook URL <input id="settings-webhook" type="password" placeholder="Discord-compatible webhook (optional)" /></label>
+        <label>Notification Webhook URL <input id="settings-webhook" type="password" autocomplete="new-password" placeholder="Discord-compatible webhook (optional)" /></label>
       </div>
     </div>
 
