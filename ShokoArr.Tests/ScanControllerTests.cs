@@ -18,6 +18,7 @@ public class ScanControllerTests : IDisposable
 {
     private readonly string _tempDir;
     private readonly ScanCacheStore _cacheStore;
+    private readonly FakeSettingsSource _settings = new();
 
     public ScanControllerTests()
     {
@@ -44,12 +45,12 @@ public class ScanControllerTests : IDisposable
         return ep;
     }
 
-    private static ScanController MakeController(Mock<IMetadataService> metadataService, ScanCacheStore cacheStore)
+    private ScanController MakeController(Mock<IMetadataService> metadataService, ScanCacheStore cacheStore)
     {
         var httpClient = new HttpClient();
         var sonarrClient = new SonarrClient(httpClient);
-        var scanner = new MissingEpisodeScanner(metadataService.Object, cacheStore, sonarrClient, new NotificationService(httpClient), new FakeSettingsSource());
-        return new ScanController(scanner, cacheStore, metadataService.Object, sonarrClient, new RelatedSeriesFinder(metadataService.Object))
+        var scanner = new MissingEpisodeScanner(metadataService.Object, cacheStore, sonarrClient, new NotificationService(httpClient), _settings);
+        return new ScanController(scanner, cacheStore, metadataService.Object, sonarrClient, new RelatedSeriesFinder(metadataService.Object), _settings)
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() },
         };

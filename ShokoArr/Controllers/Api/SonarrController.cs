@@ -22,7 +22,7 @@ public record AddDiscoveryRequest(int TvdbId, string Title);
 public record TagSyncResult(int Updated, int SkippedNoMatch, int Failed);
 
 /// <summary>Endpoints for matching Shoko series to Sonarr and triggering add/monitor/search actions.</summary>
-public class SonarrController(SeriesMatcher matcher, SonarrSearchService searchService, SonarrClient sonarrClient, ScanCacheStore cacheStore, NotificationService notificationService) : ShokoArrBaseController
+public class SonarrController(SeriesMatcher matcher, SonarrSearchService searchService, SonarrClient sonarrClient, ScanCacheStore cacheStore, NotificationService notificationService, ISettingsSource settingsSource) : ShokoArrBaseController
 {
     /// <summary>Resolves a Sonarr match for the given Shoko series from the cached scan snapshot.</summary>
     /// <param name="shokoSeriesId">The Shoko series ID.</param>
@@ -35,7 +35,7 @@ public class SonarrController(SeriesMatcher matcher, SonarrSearchService searchS
         if (series is null)
             return NotFound(new ApiResponse<object>(Success: false, Message: "Series not found in the last scan.", Data: null));
 
-        var settings = cacheStore.GetSettings();
+        var settings = settingsSource.GetSonarr();
         var resolution = await matcher.ResolveAsync(settings, series);
         return Ok(new ApiResponse<object>(Success: resolution.ErrorMessage is null, Message: resolution.ErrorMessage, Data: resolution));
     }
@@ -46,7 +46,7 @@ public class SonarrController(SeriesMatcher matcher, SonarrSearchService searchS
     [HttpPost("search-title")]
     public async Task<IActionResult> SearchTitle([FromBody] SearchTitleRequest request)
     {
-        var settings = cacheStore.GetSettings();
+        var settings = settingsSource.GetSonarr();
         var result = await sonarrClient.LookupByTitleAsync(settings, request.Title);
         return Ok(new ApiResponse<object>(Success: result.Success, Message: result.ErrorMessage, Data: result.Data));
     }
@@ -57,7 +57,7 @@ public class SonarrController(SeriesMatcher matcher, SonarrSearchService searchS
     [HttpPost("add-discovery")]
     public async Task<IActionResult> AddDiscovery([FromBody] AddDiscoveryRequest request)
     {
-        var settings = cacheStore.GetSettings();
+        var settings = settingsSource.GetSonarr();
         if (settings.QualityProfileId is null || string.IsNullOrEmpty(settings.RootFolderPath))
             return BadRequest(new ApiResponse<object>(Success: false, Message: "Quality profile and root folder must be configured in Settings before adding a series.", Data: null));
 
@@ -75,7 +75,7 @@ public class SonarrController(SeriesMatcher matcher, SonarrSearchService searchS
     public async Task<IActionResult> SyncTags()
     {
         var snapshot = cacheStore.GetLastScan();
-        var settings = cacheStore.GetSettings();
+        var settings = settingsSource.GetSonarr();
         var candidates = (snapshot?.Series ?? []).Where(s => !string.IsNullOrEmpty(s.GroupTitle) && s.TvdbId.HasValue).ToList();
 
         int updated = 0, skipped = 0, failed = 0;
@@ -113,7 +113,7 @@ public class SonarrController(SeriesMatcher matcher, SonarrSearchService searchS
         if (series is null)
             return NotFound(new ApiResponse<object>(Success: false, Message: "Series not found in the last scan.", Data: null));
 
-        var settings = cacheStore.GetSettings();
+        var settings = settingsSource.GetSonarr();
         var seriesOverride = cacheStore.GetSeriesOverride(request.ShokoSeriesId);
         var qualityProfileId = seriesOverride?.QualityProfileId ?? settings.QualityProfileId;
         var rootFolderPath = seriesOverride?.RootFolderPath ?? settings.RootFolderPath;
