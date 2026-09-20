@@ -20,4 +20,7 @@ public class MissingEpisodeInfo
 
     /// <summary>Current action status: "none", or "search-triggered" if a pending Sonarr search is recorded for this episode (see <see cref="Services.ScanCacheStore.GetPendingSearches"/>).</summary>
     public string ActionStatus { get; set; } = "none";
+
+    /// <summary>Whether Sonarr already has this episode: "none", "downloaded" (Sonarr has a file) or "downloading" (in Sonarr's queue).</summary>
+    public string SonarrState { get; set; } = "none";
 }

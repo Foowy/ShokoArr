@@ -40,7 +40,7 @@ public class ActionsTests : IDisposable
     {
         var metadataService = new Mock<IMetadataService>();
         metadataService.Setup(m => m.GetAllShokoSeries()).Returns([]);
-        var scanner = new MissingEpisodeScanner(metadataService.Object, _cacheStore, MakeSonarrClient(_ => new HttpResponseMessage(HttpStatusCode.OK)), new NotificationService(new HttpClient()), _settings);
+        var scanner = new MissingEpisodeScanner(metadataService.Object, _cacheStore, MakeSonarrClient(_ => new HttpResponseMessage(HttpStatusCode.OK)), new NotificationService(new HttpClient()), _settings, new SonarrEpisodeStatusResolver(new SonarrClient(new HttpClient())));
         var action = new TriggerScanAction(scanner);
 
         Assert.Null(_cacheStore.GetLastScan());
@@ -119,5 +119,68 @@ public class ActionsTests : IDisposable
         SetSeriesContext(action, MakeSeries(1).Object);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => action.Execute());
+    }
+
+    private static SeriesMissingResult HeldSeries(string secondState) => new()
+    {
+        ShokoSeriesId = 1,
+        Title = "One Piece",
+        TvdbId = 81797,
+        MissingEpisodes =
+        [
+            new MissingEpisodeInfo { AnidbEpisodeId = 10, EpisodeNumber = 1, Title = "Ep 1", SonarrState = "downloaded" },
+            new MissingEpisodeInfo { AnidbEpisodeId = 11, EpisodeNumber = 2, Title = "Ep 2", SonarrState = secondState },
+        ],
+    };
+
+    private (SearchMissingEpisodesAction Action, List<string> CommandBodies) MakeHeldAction(SeriesMissingResult series)
+    {
+        _settings.Sonarr = new SonarrSettings { BaseUrl = "http://sonarr.local:8989", ApiKey = "testkey" };
+        _cacheStore.SaveScan(new ScanSnapshot { Series = [series] });
+        var bodies = new List<string>();
+        var sonarrClient = MakeSonarrClient(r =>
+        {
+            var path = r.RequestUri!.PathAndQuery;
+            string body;
+            if (path.StartsWith("/api/v3/series/lookup"))
+                body = """[{"tvdbId":81797,"title":"One Piece","year":1999}]""";
+            else if (path.StartsWith("/api/v3/series"))
+                body = """[{"id":7,"titleSlug":"one-piece"}]""";
+            else if (path.StartsWith("/api/v3/episode?"))
+                body = """[{"id":101,"seasonNumber":1,"episodeNumber":1,"absoluteEpisodeNumber":1},{"id":102,"seasonNumber":1,"episodeNumber":2,"absoluteEpisodeNumber":2}]""";
+            else
+            {
+                if (path.StartsWith("/api/v3/command"))
+                    bodies.Add(r.Content!.ReadAsStringAsync().Result);
+                body = "{}";
+            }
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(body) };
+        });
+        var searchService = new SonarrSearchService(sonarrClient, _cacheStore, new NotificationService(new HttpClient()));
+        var action = new SearchMissingEpisodesAction(new SeriesMatcher(sonarrClient), searchService, sonarrClient, _cacheStore, _settings);
+        SetSeriesContext(action, MakeSeries(1).Object);
+        return (action, bodies);
+    }
+
+    [Fact]
+    public async Task SearchMissingEpisodesAction_Execute_SkipsHeldEpisodes()
+    {
+        var (action, bodies) = MakeHeldAction(HeldSeries("none"));
+        await action.Execute();
+
+        var command = Assert.Single(bodies);
+        Assert.Contains("[102]", command.Replace(" ", ""));
+        Assert.DoesNotContain("101", command);
+    }
+
+    [Fact]
+    public async Task SearchMissingEpisodesAction_Execute_AllHeld_Throws()
+    {
+        var (action, bodies) = MakeHeldAction(HeldSeries("downloading"));
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => action.Execute());
+
+        Assert.Equal("Every missing episode of this series is already in Sonarr.", ex.Message);
+        Assert.Empty(bodies);
     }
 }

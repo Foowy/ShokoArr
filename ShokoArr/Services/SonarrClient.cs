@@ -14,7 +14,8 @@ public record SonarrEpisodeResource(
     [property: JsonPropertyName("episodeNumber")] int EpisodeNumber,
     [property: JsonPropertyName("absoluteEpisodeNumber")] int? AbsoluteEpisodeNumber = null,
     [property: JsonPropertyName("title")] string? Title = null,
-    [property: JsonPropertyName("airDate")] string? AirDate = null);
+    [property: JsonPropertyName("airDate")] string? AirDate = null,
+    [property: JsonPropertyName("hasFile")] bool HasFile = false);
 
 /// <summary>Sonarr quality profile resource, as returned by Sonarr's v3 API.</summary>
 public record ArrQualityProfileResource(
@@ -122,6 +123,21 @@ public class SonarrClient(HttpClient httpClient) : ArrClientBase(httpClient)
     /// <summary>Gets all episodes for a Sonarr series (used to map AniDB episode numbers to Sonarr episode IDs).</summary>
     public Task<ArrActionResult<List<SonarrEpisodeResource>>> GetEpisodesAsync(SonarrSettings settings, int sonarrSeriesId, CancellationToken ct = default) =>
         SendAsync<List<SonarrEpisodeResource>>(BuildRequest(HttpMethod.Get, settings, $"/api/v3/episode?seriesId={sonarrSeriesId}"), ct);
+
+    /// <summary>Gets the Sonarr episode IDs currently in the download queue (first 1000 queue items).</summary>
+    public async Task<ArrActionResult<HashSet<int>>> GetQueuedEpisodeIdsAsync(SonarrSettings settings, CancellationToken ct = default)
+    {
+        var result = await SendAsync<JsonElement>(BuildRequest(HttpMethod.Get, settings, "/api/v3/queue?page=1&pageSize=1000"), ct).ConfigureAwait(false);
+        if (!result.Success)
+            return ArrActionResult<HashSet<int>>.Fail(result.ErrorMessage!);
+
+        var ids = new HashSet<int>();
+        if (result.Data.ValueKind == JsonValueKind.Object && result.Data.TryGetProperty("records", out var records) && records.ValueKind == JsonValueKind.Array)
+            foreach (var record in records.EnumerateArray())
+                if (record.ValueKind == JsonValueKind.Object && record.TryGetProperty("episodeId", out var id) && id.ValueKind == JsonValueKind.Number && id.TryGetInt32(out var value))
+                    ids.Add(value);
+        return ArrActionResult<HashSet<int>>.Ok(ids);
+    }
 
     /// <summary>Sets the given episodes to monitored, without touching any other episode's monitored state.</summary>
     public Task<ArrActionResult<bool>> MonitorEpisodesAsync(SonarrSettings settings, List<int> sonarrEpisodeIds, CancellationToken ct = default)

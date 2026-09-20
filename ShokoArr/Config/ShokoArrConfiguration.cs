@@ -61,6 +61,11 @@ public class ShokoArrConfiguration : IConfiguration
     [Display(Name = "Hide Unaired Episodes")]
     public bool HideUnaired { get; set; }
 
+    [SectionName("Scanning")]
+    [Display(Name = "Count episodes already in Sonarr as missing")]
+    [DefaultValue(true)]
+    public bool CountSonarrHeldAsMissing { get; set; } = true;
+
     [SectionName("Notifications")]
     [Display(Name = "Notification Webhook URL (Discord-compatible)")]
     [PasswordPropertyText]
@@ -75,6 +80,7 @@ public class ShokoArrConfiguration : IConfiguration
         ScanIntervalHours = ScanIntervalHours,
         IncludeSpecials = IncludeSpecials,
         HideUnaired = HideUnaired,
+        CountSonarrHeldAsMissing = CountSonarrHeldAsMissing,
         NotificationWebhookUrl = NotificationWebhookUrl,
     };
 
@@ -95,6 +101,7 @@ public class ShokoArrConfiguration : IConfiguration
         ScanIntervalHours = Math.Clamp(s.ScanIntervalHours, 0, 720);
         IncludeSpecials = s.IncludeSpecials;
         HideUnaired = s.HideUnaired;
+        CountSonarrHeldAsMissing = s.CountSonarrHeldAsMissing;
         NotificationWebhookUrl = s.NotificationWebhookUrl;
     }
 

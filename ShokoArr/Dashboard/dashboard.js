@@ -62,6 +62,16 @@ function buildStrip(count) {
 
 const bulkSelectedIds = new Set();
 let lastSeriesList = [];
+let countHeldAsMissing = true;
+
+const isFree = e => (e.SonarrState || 'none') === 'none';
+const countedEpisodes = series => countHeldAsMissing ? series.MissingEpisodes.length : series.MissingEpisodes.filter(isFree).length;
+
+function sonarrBadge(ep) {
+  if (ep.SonarrState === 'downloaded') return '<span class="sonarr-badge downloaded">in Sonarr</span>';
+  if (ep.SonarrState === 'downloading') return '<span class="sonarr-badge downloading">downloading</span>';
+  return '';
+}
 
 function renderSeries(snapshot) {
   const container = document.getElementById('series-list');
@@ -76,7 +86,9 @@ function renderSeries(snapshot) {
     if (!lastSeriesList.some(s => String(s.ShokoSeriesId) === id)) bulkSelectedIds.delete(id);
   updateBulkActionsBar();
 
-  if (!snapshot || !snapshot.Data || snapshot.Data.Series.length === 0) {
+  const visibleSeries = lastSeriesList.filter(s => countedEpisodes(s) > 0);
+
+  if (visibleSeries.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'empty';
     empty.textContent = 'No missing episodes found.';
@@ -84,7 +96,7 @@ function renderSeries(snapshot) {
     return;
   }
 
-  for (const series of snapshot.Data.Series) {
+  for (const series of visibleSeries) {
     const row = document.createElement('div');
     row.className = 'series-row' + (series.TvdbId ? '' : ' no-match');
     row.dataset.seriesId = series.ShokoSeriesId;
@@ -115,11 +127,11 @@ function renderSeries(snapshot) {
     title.textContent = series.Title;
     header.appendChild(title);
 
-    header.appendChild(buildStrip(series.MissingEpisodes.length));
+    header.appendChild(buildStrip(countedEpisodes(series)));
 
     const count = document.createElement('span');
     count.className = 'count';
-    count.textContent = `${series.MissingEpisodes.length} ep`;
+    count.textContent = `${countedEpisodes(series)} ep`;
     header.appendChild(count);
 
     header.onclick = () => row.classList.toggle('expanded');
@@ -131,7 +143,7 @@ function renderSeries(snapshot) {
       const epRow = document.createElement('div');
       epRow.className = 'episode-row';
       const code = ep.IsSpecial ? `S${ep.EpisodeNumber}` : `E${ep.EpisodeNumber}`;
-      epRow.innerHTML = `<span><span class="ep-code">${escapeHtml(code)}</span><span class="ep-title">${escapeHtml(ep.Title || '(untitled)')}</span></span><span class="status ${escapeHtml(ep.ActionStatus)}">${escapeHtml(ep.ActionStatus)}</span>`;
+      epRow.innerHTML = `<span><span class="ep-code">${escapeHtml(code)}</span><span class="ep-title">${escapeHtml(ep.Title || '(untitled)')}</span></span><span>${sonarrBadge(ep)}<span class="status ${escapeHtml(ep.ActionStatus)}">${escapeHtml(ep.ActionStatus)}</span></span>`;
       episodesDiv.appendChild(epRow);
     }
     row.appendChild(episodesDiv);
@@ -190,7 +202,11 @@ function renderSeries(snapshot) {
 }
 
 async function addAndSearch(series) {
-  const anidbEpisodeIds = series.MissingEpisodes.map(e => e.AnidbEpisodeId);
+  const anidbEpisodeIds = series.MissingEpisodes.filter(e => e.SonarrState === 'none').map(e => e.AnidbEpisodeId);
+  if (anidbEpisodeIds.length === 0) {
+    alert('Every missing episode of this series is already in Sonarr.');
+    return;
+  }
   const result = await fetchJson('/Sonarr/add-and-search', {
     method: 'POST',
     body: JSON.stringify({ shokoSeriesId: series.ShokoSeriesId, tvdbId: series.TvdbId, anidbEpisodeIds }),
@@ -288,7 +304,8 @@ document.getElementById('bulk-add-and-search').onclick = async () => {
   const skipped = selected.length - withMatch.length;
   let triggered = 0, failed = 0;
   for (const series of withMatch) {
-    const anidbEpisodeIds = series.MissingEpisodes.map(e => e.AnidbEpisodeId);
+    const anidbEpisodeIds = series.MissingEpisodes.filter(e => e.SonarrState === 'none').map(e => e.AnidbEpisodeId);
+    if (anidbEpisodeIds.length === 0) continue;
     const result = await fetchJson('/Sonarr/add-and-search', {
       method: 'POST',
       body: JSON.stringify({ shokoSeriesId: series.ShokoSeriesId, tvdbId: series.TvdbId, anidbEpisodeIds }),
@@ -360,6 +377,7 @@ function currentSettingsForm() {
     scanIntervalHours: Number(document.getElementById('settings-interval').value),
     includeSpecials: document.getElementById('settings-include-specials').checked,
     hideUnaired: document.getElementById('settings-hide-unaired').checked,
+    countSonarrHeldAsMissing: document.getElementById('settings-count-sonarr-held').checked,
     notificationWebhookUrl: document.getElementById('settings-webhook').value,
   };
 }
@@ -408,6 +426,9 @@ async function loadSettings() {
   document.getElementById('settings-interval').value = result.Data.ScanIntervalHours;
   document.getElementById('settings-include-specials').checked = result.Data.IncludeSpecials;
   document.getElementById('settings-hide-unaired').checked = result.Data.HideUnaired;
+  countHeldAsMissing = result.Data.CountSonarrHeldAsMissing !== false;
+  document.getElementById('settings-count-sonarr-held').checked = countHeldAsMissing;
+  if (lastSeriesList.length) renderSeries({ Data: { Series: lastSeriesList } });
   savedQualityProfileId = result.Data.QualityProfileId;
   savedRootFolderPath = result.Data.RootFolderPath;
   populateSelect('settings-quality-profile', savedQualityProfileId ? [{ Id: savedQualityProfileId, Name: `#${savedQualityProfileId}` }] : [], 'Id', 'Name', savedQualityProfileId);

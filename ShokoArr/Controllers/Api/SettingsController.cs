@@ -22,6 +22,7 @@ public class SettingsController(ISettingsSource settingsSource, SonarrClient son
             RootFolderPath = settings.RootFolderPath,
             IncludeSpecials = settings.IncludeSpecials,
             HideUnaired = settings.HideUnaired,
+            CountSonarrHeldAsMissing = settings.CountSonarrHeldAsMissing,
             NotificationWebhookUrl = string.IsNullOrEmpty(settings.NotificationWebhookUrl) ? null : new string('*', 8),
         };
         return Ok(new ApiResponse<SonarrSettings>(Success: true, Message: null, Data: masked));

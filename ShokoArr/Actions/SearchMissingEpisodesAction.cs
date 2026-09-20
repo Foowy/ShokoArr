@@ -46,7 +46,9 @@ public class SearchMissingEpisodesAction(SeriesMatcher matcher, SonarrSearchServ
         if (!existing.Success || existing.Data!.Count == 0)
             throw new InvalidOperationException("Series is confirmed in Sonarr's lookup but not yet added — use the ShokoArr dashboard to add it first.");
 
-        var anidbEpisodeIds = series.MissingEpisodes.Select(e => e.AnidbEpisodeId).ToList();
+        var anidbEpisodeIds = series.MissingEpisodes.Where(e => e.SonarrState == "none").Select(e => e.AnidbEpisodeId).ToList();
+        if (anidbEpisodeIds.Count == 0)
+            throw new InvalidOperationException("Every missing episode of this series is already in Sonarr.");
         var result = await searchService.MonitorAndSearchAsync(settings, series.ShokoSeriesId, existing.Data[0].Id, anidbEpisodeIds, series, existing.Data[0].TitleSlug, token).ConfigureAwait(false);
         if (!result.Success)
             throw new InvalidOperationException(result.ErrorMessage);
