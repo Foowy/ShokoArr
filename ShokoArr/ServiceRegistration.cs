@@ -15,7 +15,7 @@ public class ServiceRegistration : IPluginServiceRegistration
         serviceCollection
             .AddHttpClient(clientName, client =>
             {
-                client.DefaultRequestHeaders.Add("User-Agent", $"{clientName}/{ShokoArrConstants.Version}");
+                client.DefaultRequestHeaders.Add("User-Agent", $"{clientName}/{typeof(ServiceRegistration).Assembly.GetName().Version!.ToString(3)}");
                 // A hung *arr instance would otherwise stall a scan up to the 100s default per call, across the whole reconcile loop.
                 // A timeout surfaces as TaskCanceledException, which ArrClientBase already maps to a Fail result.
                 client.Timeout = TimeSpan.FromSeconds(30);

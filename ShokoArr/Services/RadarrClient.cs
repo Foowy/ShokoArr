@@ -8,13 +8,6 @@ namespace ShokoArr.Services;
 /// <summary>Typed HTTP client for Radarr's v3 API. Never throws on HTTP/connectivity failure — all calls return a typed result. Mirrors SonarrClient's shape; reuses ArrActionResult/ArrQualityProfileResource/ArrRootFolderResource since Radarr's v3 API shares the same *arr-family conventions.</summary>
 public class RadarrClient(HttpClient httpClient) : ArrClientBase(httpClient)
 {
-    private HttpRequestMessage BuildRequest(HttpMethod method, RadarrSettings settings, string path) =>
-        BuildRequest(method, settings.BaseUrl, settings.ApiKey, path);
-
-    /// <summary>Validates connectivity and API key against Radarr's system status endpoint.</summary>
-    public Task<ArrActionResult<bool>> TestConnectionAsync(RadarrSettings settings, CancellationToken ct = default) =>
-        SendAsync<bool>(BuildRequest(HttpMethod.Get, settings, "/api/v3/system/status"), ct);
-
     /// <summary>Looks up Radarr movie candidates by free-text title — the only matching path for unowned suggestions, which have no TMDB link.</summary>
     public Task<ArrActionResult<List<RadarrMovieLookupResult>>> LookupByTitleAsync(RadarrSettings settings, string title, CancellationToken ct = default) =>
         SendAsync<List<RadarrMovieLookupResult>>(BuildRequest(HttpMethod.Get, settings, $"/api/v3/movie/lookup?term={Uri.EscapeDataString(title)}"), ct);
@@ -42,11 +35,4 @@ public class RadarrClient(HttpClient httpClient) : ArrClientBase(httpClient)
             : ArrActionResult<int>.Fail("Radarr's add-movie response did not contain an id.");
     }
 
-    /// <summary>Gets Radarr's configured quality profiles, for the settings dropdown. Reuses ArrQualityProfileResource — the shape is identical between Sonarr and Radarr's v3 API.</summary>
-    public Task<ArrActionResult<List<ArrQualityProfileResource>>> GetQualityProfilesAsync(RadarrSettings settings, CancellationToken ct = default) =>
-        SendAsync<List<ArrQualityProfileResource>>(BuildRequest(HttpMethod.Get, settings, "/api/v3/qualityprofile"), ct);
-
-    /// <summary>Gets Radarr's configured root folders, for the settings dropdown. Reuses ArrRootFolderResource for the same reason.</summary>
-    public Task<ArrActionResult<List<ArrRootFolderResource>>> GetRootFoldersAsync(RadarrSettings settings, CancellationToken ct = default) =>
-        SendAsync<List<ArrRootFolderResource>>(BuildRequest(HttpMethod.Get, settings, "/api/v3/rootfolder"), ct);
 }

@@ -1,7 +1,7 @@
 namespace ShokoArr.Config;
 
 /// <summary>User-configured connection details for Radarr integration (movie-type anime bridging).</summary>
-public class RadarrSettings
+public class RadarrSettings : IArrSettings
 {
     /// <summary>Base URL of the Radarr instance, e.g. "http://192.168.1.60:7878".</summary>
     public string? BaseUrl { get; set; }

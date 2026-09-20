@@ -142,13 +142,9 @@ public class ScanCacheStore : IDisposable
         var col = _db.GetCollection<SearchHistoryEntry>(SearchHistoryCollectionName);
         col.InsertBulk(entries);
 
-        var overflow = col.Count() - MaxHistoryEntries;
-        if (overflow > 0)
-        {
-            // Keyed on Id, not TimestampUtc: entries from the same call can share an identical timestamp, which would let a timestamp-based cutoff delete a whole batch instead of just the oldest overflow entries.
-            var cutoffId = col.FindAll().OrderBy(e => e.Id).Skip(overflow - 1).First().Id;
-            col.DeleteMany(e => e.Id <= cutoffId);
-        }
+        // Ids auto-increment and only the oldest are ever deleted, so the ids are contiguous and a cutoff on id keeps exactly the newest MaxHistoryEntries.
+        var cutoffId = col.Max().AsInt32 - MaxHistoryEntries;
+        col.DeleteMany(e => e.Id <= cutoffId);
     }
 
     /// <summary>Gets the most recent search-history entries, newest first.</summary>

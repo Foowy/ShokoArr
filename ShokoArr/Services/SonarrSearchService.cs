@@ -55,31 +55,20 @@ public class SonarrSearchService(SonarrClient sonarrClient, ScanCacheStore cache
             return ArrActionResult<string?>.Fail(searchResult.ErrorMessage!);
 
         var triggeredAt = DateTime.UtcNow;
-        var historyEntries = new List<SearchHistoryEntry>();
-        foreach (var ep in targetEpisodes.Where(e => !unmappedIds.Contains(e.AnidbEpisodeId)))
+        var pendingEntries = targetEpisodes.Where(e => !unmappedIds.Contains(e.AnidbEpisodeId)).Select(ep => new PendingSearch
         {
-            cacheStore.AddPendingSearch(new PendingSearch
-            {
-                ShokoSeriesId = shokoSeriesId,
-                SeriesTitle = series.Title,
-                AnidbEpisodeId = ep.AnidbEpisodeId,
-                EpisodeTitle = ep.Title,
-                SonarrSeriesId = sonarrSeriesId,
-                SonarrTitleSlug = sonarrTitleSlug,
-                SonarrEpisodeId = sonarrEpisodeIdByAnidbId[ep.AnidbEpisodeId],
-                TriggeredAtUtc = triggeredAt,
-            });
-            historyEntries.Add(new SearchHistoryEntry
-            {
-                ShokoSeriesId = shokoSeriesId,
-                SeriesTitle = series.Title,
-                AnidbEpisodeId = ep.AnidbEpisodeId,
-                EpisodeTitle = ep.Title,
-                Outcome = SearchHistoryOutcome.Triggered,
-                TimestampUtc = triggeredAt,
-            });
-        }
-        cacheStore.AddHistoryEntries(historyEntries);
+            ShokoSeriesId = shokoSeriesId,
+            SeriesTitle = series.Title,
+            AnidbEpisodeId = ep.AnidbEpisodeId,
+            EpisodeTitle = ep.Title,
+            SonarrSeriesId = sonarrSeriesId,
+            SonarrTitleSlug = sonarrTitleSlug,
+            SonarrEpisodeId = sonarrEpisodeIdByAnidbId[ep.AnidbEpisodeId],
+            TriggeredAtUtc = triggeredAt,
+        }).ToList();
+        foreach (var pending in pendingEntries)
+            cacheStore.AddPendingSearch(pending);
+        cacheStore.AddHistoryEntries(pendingEntries.Select(p => SearchHistoryEntry.From(p, SearchHistoryOutcome.Triggered, triggeredAt)));
 
         var triggeredCount = targetEpisodes.Count - unmappedIds.Count;
         await notificationService.NotifyAsync(settings, $"Triggered Sonarr search for {triggeredCount} episode(s) of **{series.Title}**");

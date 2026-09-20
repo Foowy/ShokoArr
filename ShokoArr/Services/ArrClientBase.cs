@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using ShokoArr.Config;
 using ShokoArr.Models;
 
 namespace ShokoArr.Services;
@@ -11,15 +12,34 @@ public abstract class ArrClientBase(HttpClient httpClient)
 
     private string ServiceName => GetType().Name.Replace("Client", "");
 
-    private protected HttpRequestMessage BuildRequest(HttpMethod method, string? baseUrl, string? apiKey, string path)
+    /// <summary>Validates connectivity and API key against the system status endpoint.</summary>
+    public Task<ArrActionResult<bool>> TestConnectionAsync(IArrSettings settings, CancellationToken ct = default) =>
+        SendAsync(BuildRequest(HttpMethod.Get, settings, "/api/v3/system/status"), ct);
+
+    /// <summary>Gets the configured quality profiles, for the settings dropdown.</summary>
+    public Task<ArrActionResult<List<ArrQualityProfileResource>>> GetQualityProfilesAsync(IArrSettings settings, CancellationToken ct = default) =>
+        SendAsync<List<ArrQualityProfileResource>>(BuildRequest(HttpMethod.Get, settings, "/api/v3/qualityprofile"), ct);
+
+    /// <summary>Gets the configured root folders, for the settings dropdown.</summary>
+    public Task<ArrActionResult<List<ArrRootFolderResource>>> GetRootFoldersAsync(IArrSettings settings, CancellationToken ct = default) =>
+        SendAsync<List<ArrRootFolderResource>>(BuildRequest(HttpMethod.Get, settings, "/api/v3/rootfolder"), ct);
+
+    private protected static HttpRequestMessage BuildRequest(HttpMethod method, IArrSettings settings, string path)
     {
         // A null/blank BaseUrl produces a relative URI here rather than throwing, so the failure surfaces inside SendAsync's try/catch instead of crashing the caller.
-        var request = new HttpRequestMessage(method, $"{baseUrl?.TrimEnd('/') ?? string.Empty}{path}");
-        request.Headers.Add("X-Api-Key", apiKey);
+        var request = new HttpRequestMessage(method, $"{settings.BaseUrl?.TrimEnd('/') ?? string.Empty}{path}");
+        request.Headers.Add("X-Api-Key", settings.ApiKey);
         return request;
     }
 
-    private protected async Task<ArrActionResult<T>> SendAsync<T>(HttpRequestMessage request, CancellationToken ct)
+    private protected Task<ArrActionResult<T>> SendAsync<T>(HttpRequestMessage request, CancellationToken ct) =>
+        SendAsync(request, content => content.ReadFromJsonAsync<T>(JsonOptions, ct), ct);
+
+    /// <summary>For calls whose response body is ignored (monitor, command, status).</summary>
+    private protected async Task<ArrActionResult<bool>> SendAsync(HttpRequestMessage request, CancellationToken ct) =>
+        await SendAsync(request, _ => Task.FromResult(true), ct).ConfigureAwait(false);
+
+    private async Task<ArrActionResult<T>> SendAsync<T>(HttpRequestMessage request, Func<HttpContent, Task<T?>> readBody, CancellationToken ct)
     {
         try
         {
@@ -28,10 +48,7 @@ public abstract class ArrClientBase(HttpClient httpClient)
             if (!response.IsSuccessStatusCode)
                 return ArrActionResult<T>.Fail($"{ServiceName} returned {(int)response.StatusCode} {response.ReasonPhrase}");
 
-            if (typeof(T) == typeof(bool))
-                return ArrActionResult<T>.Ok((T)(object)true);
-
-            var data = await response.Content.ReadFromJsonAsync<T>(JsonOptions, ct).ConfigureAwait(false);
+            var data = await readBody(response.Content).ConfigureAwait(false);
             return data is null ? ArrActionResult<T>.Fail($"{ServiceName} returned an empty response body") : ArrActionResult<T>.Ok(data);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)

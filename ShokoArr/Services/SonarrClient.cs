@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -36,13 +35,6 @@ public record SonarrTagResource([property: JsonPropertyName("id")] int Id, [prop
 /// <summary>Typed HTTP client for Sonarr's v3 API. Never throws on HTTP/connectivity failure — all calls return a typed result.</summary>
 public class SonarrClient(HttpClient httpClient) : ArrClientBase(httpClient)
 {
-    private HttpRequestMessage BuildRequest(HttpMethod method, SonarrSettings settings, string path) =>
-        BuildRequest(method, settings.BaseUrl, settings.ApiKey, path);
-
-    /// <summary>Validates connectivity and API key against Sonarr's system status endpoint.</summary>
-    public Task<ArrActionResult<bool>> TestConnectionAsync(SonarrSettings settings, CancellationToken ct = default) =>
-        SendAsync<bool>(BuildRequest(HttpMethod.Get, settings, "/api/v3/system/status"), ct);
-
     /// <summary>Looks up Sonarr series candidates by TVDB ID.</summary>
     public Task<ArrActionResult<List<SonarrSeriesLookupResult>>> LookupByTvdbIdAsync(SonarrSettings settings, int tvdbId, CancellationToken ct = default) =>
         SendAsync<List<SonarrSeriesLookupResult>>(BuildRequest(HttpMethod.Get, settings, $"/api/v3/series/lookup?term={Uri.EscapeDataString($"tvdb:{tvdbId}")}"), ct);
@@ -77,14 +69,6 @@ public class SonarrClient(HttpClient httpClient) : ArrClientBase(httpClient)
         var titleSlug = result.Data.TryGetProperty("titleSlug", out var slugProp) ? slugProp.GetString() : null;
         return ArrActionResult<SonarrSeriesResource>.Ok(new SonarrSeriesResource(idProp.GetInt32(), titleSlug));
     }
-
-    /// <summary>Gets Sonarr's configured quality profiles, for the user to choose one during settings setup.</summary>
-    public Task<ArrActionResult<List<ArrQualityProfileResource>>> GetQualityProfilesAsync(SonarrSettings settings, CancellationToken ct = default) =>
-        SendAsync<List<ArrQualityProfileResource>>(BuildRequest(HttpMethod.Get, settings, "/api/v3/qualityprofile"), ct);
-
-    /// <summary>Gets Sonarr's configured root folders, for the user to choose one during settings setup.</summary>
-    public Task<ArrActionResult<List<ArrRootFolderResource>>> GetRootFoldersAsync(SonarrSettings settings, CancellationToken ct = default) =>
-        SendAsync<List<ArrRootFolderResource>>(BuildRequest(HttpMethod.Get, settings, "/api/v3/rootfolder"), ct);
 
     /// <summary>Looks up a series already added to Sonarr by TVDB ID (as opposed to <see cref="LookupByTvdbIdAsync"/>, which searches TheTVDB regardless of whether it's already added).</summary>
     public Task<ArrActionResult<List<SonarrSeriesResource>>> GetExistingSeriesByTvdbIdAsync(SonarrSettings settings, int tvdbId, CancellationToken ct = default) =>
@@ -132,7 +116,7 @@ public class SonarrClient(HttpClient httpClient) : ArrClientBase(httpClient)
 
         var putRequest = BuildRequest(HttpMethod.Put, settings, $"/api/v3/series/{sonarrSeriesId}");
         putRequest.Content = JsonContent.Create(series, options: JsonOptions);
-        return await SendAsync<bool>(putRequest, ct).ConfigureAwait(false);
+        return await SendAsync(putRequest, ct).ConfigureAwait(false);
     }
 
     /// <summary>Gets all episodes for a Sonarr series (used to map AniDB episode numbers to Sonarr episode IDs).</summary>
@@ -144,7 +128,7 @@ public class SonarrClient(HttpClient httpClient) : ArrClientBase(httpClient)
     {
         var request = BuildRequest(HttpMethod.Put, settings, "/api/v3/episode/monitor");
         request.Content = JsonContent.Create(new { episodeIds = sonarrEpisodeIds, monitored = true }, options: JsonOptions);
-        return SendAsync<bool>(request, ct);
+        return SendAsync(request, ct);
     }
 
     /// <summary>Sets the given episodes to unmonitored, without touching any other episode's monitored state. Used to reconcile episodes Shoko has already imported so Sonarr's own automatic/RSS search stops re-fetching them.</summary>
@@ -152,7 +136,7 @@ public class SonarrClient(HttpClient httpClient) : ArrClientBase(httpClient)
     {
         var request = BuildRequest(HttpMethod.Put, settings, "/api/v3/episode/monitor");
         request.Content = JsonContent.Create(new { episodeIds = sonarrEpisodeIds, monitored = false }, options: JsonOptions);
-        return SendAsync<bool>(request, ct);
+        return SendAsync(request, ct);
     }
 
     /// <summary>Triggers Sonarr's EpisodeSearch command for the given episodes.</summary>
@@ -160,6 +144,6 @@ public class SonarrClient(HttpClient httpClient) : ArrClientBase(httpClient)
     {
         var request = BuildRequest(HttpMethod.Post, settings, "/api/v3/command");
         request.Content = JsonContent.Create(new { name = "EpisodeSearch", episodeIds = sonarrEpisodeIds }, options: JsonOptions);
-        return SendAsync<bool>(request, ct);
+        return SendAsync(request, ct);
     }
 }

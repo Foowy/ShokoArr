@@ -88,6 +88,7 @@ public class SonarrSearchServiceTests : IDisposable
 
         Assert.True(result.Success);
         Assert.Equal("some-anime", _stores[^1].GetPendingSearches().Single().SonarrTitleSlug);
+        Assert.Equal(SearchHistoryOutcome.Triggered, _stores[^1].GetHistory().Single().Outcome);
     }
 
     [Fact]
