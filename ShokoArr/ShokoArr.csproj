@@ -1,0 +1,69 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RepositoryUrl>https://github.com/Foowy/ShokoArr</RepositoryUrl>
+    <PackageTags>hosted-service, sonarr, missing-episodes</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Title>Shoko Arr</Title>
+    <Authors>Foowy</Authors>
+    <Version>0.5.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Compile-only (host supplies at runtime); must match the Shoko host's bundled version or the plugin fails to load. -->
+    <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="10.0.0" ExcludeAssets="runtime" />
+    <PackageReference Include="Shoko.Abstractions" Version="6.0.0-alpha.92" ExcludeAssets="runtime" />
+    <PackageReference Include="NLog" Version="6.2.1" ExcludeAssets="runtime" />
+    <PackageReference Include="LiteDB" Version="5.0.21" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Dashboard\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>dashboard\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+
+  <!-- Embeds git/build metadata so ShokoServer's Plugin Manager can match this build to its
+       manifest.json release entry (source revision + RID + abstraction version) and show the
+       plugin's icon/release info in the Installed tab, not just the Browse/repository listing. -->
+  <Target Name="PluginAssemblyVersion" BeforeTargets="GetAssemblyVersion;GenerateAssemblyInfo" Condition="Exists('../.git')">
+    <PropertyGroup Condition="$(OS) == 'Windows_NT'">
+      <GitDateFormat>%%aI</GitDateFormat>
+      <NullStdErr>NUL</NullStdErr>
+    </PropertyGroup>
+    <PropertyGroup Condition="$(OS) != 'Windows_NT'">
+      <GitDateFormat>%aI</GitDateFormat>
+      <NullStdErr>/dev/null</NullStdErr>
+    </PropertyGroup>
+    <Exec Command="git log -1 --format=$(GitDateFormat)" ConsoleToMsBuild="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_GitAuthorDateRaw" />
+    </Exec>
+    <Exec Command="git rev-parse HEAD" ConsoleToMsBuild="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_GitCommitRaw" />
+    </Exec>
+    <Exec Command="git describe --exact-match --tags --match &quot;v[0-9]*.[0-9]*.[0-9]*&quot; 2>$(NullStdErr)" ConsoleToMsBuild="true" IgnoreExitCode="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_GitTagRaw" />
+    </Exec>
+    <PropertyGroup>
+      <ReleaseDate>$([System.String]::Copy('$(_GitAuthorDateRaw)').Trim())</ReleaseDate>
+      <SourceRevision>$([System.String]::Copy('$(_GitCommitRaw)').Trim())</SourceRevision>
+      <ReleaseTag>$([System.String]::Copy('$(_GitTagRaw)').Trim())</ReleaseTag>
+    </PropertyGroup>
+    <ItemGroup>
+      <AssemblyMetadata Include="RuntimeIdentifier" Value="$(RuntimeIdentifier)" Condition="'$(RuntimeIdentifier)' != ''" />
+      <AssemblyMetadata Include="ReleaseChannel" Value="$(RELEASE_CHANNEL)" Condition="'$(RELEASE_CHANNEL)' != ''" />
+      <AssemblyMetadata Include="ReleaseDate" Value="$(ReleaseDate)" Condition="'$(ReleaseDate)' != ''" />
+      <AssemblyMetadata Include="ReleaseTag" Value="$(ReleaseTag)" Condition="'$(ReleaseTag)' != ''" />
+      <AssemblyMetadata Include="SourceRevision" Value="$(SourceRevision)" Condition="'$(SourceRevision)' != ''" />
+    </ItemGroup>
+  </Target>
+</Project>

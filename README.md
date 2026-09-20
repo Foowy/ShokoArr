@@ -1,8 +1,8 @@
-# Shoko Sonarr
+# Shoko Arr
 
-<img src="assets/master_shokosonarr.png" width="200" alt="Shoko Sonarr logo">
+<img src="assets/master_shokosonarr.png" width="200" alt="Shoko Arr logo">
 
-[![CI](https://github.com/Foowy/ShokoSonarr/actions/workflows/ci.yml/badge.svg)](https://github.com/Foowy/ShokoSonarr/actions/workflows/ci.yml)
+[![CI](https://github.com/Foowy/ShokoArr/actions/workflows/ci.yml/badge.svg)](https://github.com/Foowy/ShokoArr/actions/workflows/ci.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 A [ShokoServer](https://github.com/ShokoAnime/ShokoServer) plugin that scans your anime collection for missing episodes and bridges them to [Sonarr](https://sonarr.tv/) for automated download — with a related-series discovery feed and a [Radarr](https://radarr.video/) bolt-on for movie-type suggestions.
@@ -65,16 +65,16 @@ http://<your-shoko-host>:<port>/api/plugin/ShokoSonarr/dashboard
 This repo publishes a live [`manifest.json`](manifest.json) that ShokoServer's plugin manager can consume directly as a repository. It's kept up to date automatically: every tagged GitHub release adds its own entry (version, changelog, per-runtime archive + checksum) via CI.
 
 1. In Shoko's WebUI, go to **Settings → Plugins** and add a new repository with:
-   - **Name:** `Shoko Sonarr` (or anything you like)
-   - **URL:** `https://raw.githubusercontent.com/Foowy/ShokoSonarr/master/manifest.json`
-2. Shoko fetches the manifest and lists Shoko Sonarr as an installable package — pick a release and install it from there.
+   - **Name:** `Shoko Arr` (or anything you like)
+   - **URL:** `https://raw.githubusercontent.com/Foowy/ShokoArr/master/manifest.json`
+2. Shoko fetches the manifest and lists Shoko Arr as an installable package — pick a release and install it from there.
 3. Once installed, enable **auto-upgrade** on the repository/package if you want future releases pulled in automatically; otherwise re-check the plugin manager after new releases.
 
 ### Manual deploy
 
 ```bash
-dotnet publish ShokoSonarr -c Release -o <output-dir>
-# copy <output-dir>/* into Shoko's plugins/ShokoSonarr/ directory, then restart Shoko Server
+dotnet publish ShokoArr -c Release -o <output-dir>
+# copy <output-dir>/* into Shoko's plugins/ShokoArr/ directory, then restart Shoko Server
 ```
 
 Plugin load only happens at ShokoServer startup — copying the DLL alone has no effect.
