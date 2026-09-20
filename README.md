@@ -50,7 +50,7 @@ http://<your-shoko-host>:<port>/api/plugin/ShokoSonarr/dashboard
 - **Sync Tags** — retroactively pushes the Shoko-group tag onto Sonarr series added before tag propagation existed.
 - **Pending Searches** — view and cancel any in-flight Sonarr search the plugin has triggered but Shoko hasn't confirmed as imported yet.
 - **History** — a log of past outcomes (triggered, imported, cancelled, expired) for episodes that were previously pending, since Pending Searches only shows what's still in-flight.
-- **Theme picker** — System (follows OS dark/light), Ember, Deep Teal, AniBlackle, or Paper.
+- **Theme picker** — System (follows OS dark/light), Ember, Deep Teal, AniBlackle, Neonglass, or Paper.
 - **Settings** - Sonarr/Radarr connection, quality profile, root folder, scan interval, specials/unaired filters and notification webhook (see First-time setup).
 
 ### First-time setup

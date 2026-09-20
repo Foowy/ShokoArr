@@ -12,6 +12,7 @@
     "missing-episodes"
   ],
   "image_url": "https://raw.githubusercontent.com/Foowy/ShokoArr/master/assets/master_shokosonarr.png",
+  "icon_url": "https://raw.githubusercontent.com/Foowy/ShokoArr/master/assets/icon.png",
   "releases": [
     {
       "version": "0.6.1",
