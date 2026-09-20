@@ -12,4 +12,8 @@ public class FakeSettingsSource : ISettingsSource
     public SonarrSettings GetSonarr() => Sonarr;
 
     public RadarrSettings GetRadarr() => Radarr;
+
+    public void SaveSonarr(SonarrSettings settings) => Sonarr = settings;
+
+    public void SaveRadarr(RadarrSettings settings) => Radarr = settings;
 }

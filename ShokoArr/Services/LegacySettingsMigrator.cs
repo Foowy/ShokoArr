@@ -1,4 +1,3 @@
-using Shoko.Abstractions.Config.Components;
 using ShokoArr.Config;
 
 namespace ShokoArr.Services;
@@ -14,22 +13,17 @@ public static class LegacySettingsMigrator
 
         target.SonarrUrl = sonarr.BaseUrl;
         target.SonarrApiKey = sonarr.ApiKey;
-        target.SonarrQualityProfile = ProfileSelection(sonarr.QualityProfileId);
-        target.SonarrRootFolder = FolderSelection(sonarr.RootFolderPath);
+        target.SonarrQualityProfile = ShokoArrConfiguration.ChooseProfile(target.SonarrQualityProfile, sonarr.QualityProfileId);
+        target.SonarrRootFolder = ShokoArrConfiguration.ChooseFolder(target.SonarrRootFolder, sonarr.RootFolderPath);
         target.ScanIntervalHours = Math.Clamp(sonarr.ScanIntervalHours, 0, 720);
         target.IncludeSpecials = sonarr.IncludeSpecials;
         target.HideUnaired = sonarr.HideUnaired;
         target.NotificationWebhookUrl = sonarr.NotificationWebhookUrl;
         target.RadarrUrl = radarr.BaseUrl;
         target.RadarrApiKey = radarr.ApiKey;
-        target.RadarrQualityProfile = ProfileSelection(radarr.QualityProfileId);
-        target.RadarrRootFolder = FolderSelection(radarr.RootFolderPath);
+        target.RadarrQualityProfile = ShokoArrConfiguration.ChooseProfile(target.RadarrQualityProfile, radarr.QualityProfileId);
+        target.RadarrRootFolder = ShokoArrConfiguration.ChooseFolder(target.RadarrRootFolder, radarr.RootFolderPath);
         return true;
     }
 
-    private static SelectComponent<int> ProfileSelection(int? id) =>
-        id is { } value ? new([new(value, $"#{value}", isSelected: true)]) : new();
-
-    private static SelectComponent<string> FolderSelection(string? path) =>
-        string.IsNullOrEmpty(path) ? new() : new([new(path, path, isSelected: true)]);
 }

@@ -51,17 +51,17 @@ http://<your-shoko-host>:<port>/api/plugin/ShokoSonarr/dashboard
 - **Pending Searches** — view and cancel any in-flight Sonarr search the plugin has triggered but Shoko hasn't confirmed as imported yet.
 - **History** — a log of past outcomes (triggered, imported, cancelled, expired) for episodes that were previously pending, since Pending Searches only shows what's still in-flight.
 - **Theme picker** — System (follows OS dark/light), Ember, Deep Teal, AniBlackle, or Paper.
-- **Settings** - moved to Shoko's native plugin configuration (see First-time setup); the dashboard only links there.
+- **Settings** - Sonarr/Radarr connection, quality profile, root folder, scan interval, specials/unaired filters and notification webhook (see First-time setup).
 
 ### First-time setup
 
-1. Open Shoko WebUI, **Settings**, **Plugins**, **Shoko Arr**.
-2. Enter your Sonarr URL and API key (Sonarr, Settings, General).
-3. Press the Sonarr **Test** button to load quality profiles and root folders.
+1. Open the ShokoArr dashboard and go to the **Settings** panel.
+2. Enter your Sonarr base URL and API key (Sonarr, Settings, General).
+3. Press **Test Connection** to load the quality profile and root folder dropdowns.
 4. Pick a profile and folder, then **Save**.
-5. Optionally repeat for Radarr if you want movie-type suggestions routed there. Scan interval (hours, 0 disables), include specials, hide unaired and the notification webhook are in the same page.
+5. Optionally repeat for Radarr if you want movie-type suggestions routed there. Scan interval (hours, 0 disables), include specials, hide unaired and the notification webhook are in the same panel.
 
-Existing settings are migrated automatically on first start.
+Existing settings are migrated automatically on first start. Settings are stored in Shoko's plugin configuration (visible under `/api/v3/Configuration`), which Shoko WebUI cannot edit yet.
 
 > Sonarr/Radarr must be directly reachable from the Shoko host. If either sits behind a reverse proxy with SSO/forward-auth, use its internal LAN address instead — API-key requests can't pass through an SSO login redirect.
 
@@ -84,7 +84,7 @@ dotnet publish ShokoArr -c Release -o <output-dir>
 # copy <output-dir>/* into Shoko's plugins/ShokoArr/ directory, then restart Shoko Server
 ```
 
-Plugin load only happens at ShokoServer startup — copying the DLL alone has no effect. Requires a Shoko Server build with plugin Abstractions 6.0 (currently the `dev`/`daily` channel); the settings UI also needs plugin configuration support in that build.
+Plugin load only happens at ShokoServer startup — copying the DLL alone has no effect. Requires a Shoko Server build with plugin Abstractions 6.0 (currently the `dev`/`daily` channel).
 
 ## Building & testing
 

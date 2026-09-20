@@ -25,6 +25,36 @@
   </header>
 
   <section id="settings-panel" class="panel hidden">
+    <div class="settings-section">
+      <h2>Sonarr Connection</h2>
+      <div class="settings-grid">
+        <label>Base URL <input id="settings-url" type="text" placeholder="http://192.168.1.40:8989" /></label>
+        <label>API Key <input id="settings-key" type="password" /></label>
+        <label>Quality Profile <select id="settings-quality-profile"></select></label>
+        <label>Root Folder <select id="settings-root-folder"></select></label>
+      </div>
+      <div class="actions">
+        <button id="test-connection">Test Connection</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h2>Radarr Connection</h2>
+      <div class="settings-grid">
+        <label>Base URL <input id="radarr-settings-url" type="text" placeholder="http://192.168.1.60:7878" /></label>
+        <label>API Key <input id="radarr-settings-key" type="password" /></label>
+        <label>Quality Profile <select id="radarr-settings-quality-profile"></select></label>
+        <label>Root Folder <select id="radarr-settings-root-folder"></select></label>
+      </div>
+      <div class="actions">
+        <button id="radarr-test-connection">Test Connection</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h2>Plugin Settings</h2>
+      <div class="settings-grid">
+        <label>Scan Interval (hours) <input id="settings-interval" type="number" min="0" max="720" /></label>
         <label>Theme
           <select id="theme-select">
             <optgroup label="Auto">
@@ -40,7 +70,16 @@
             </optgroup>
           </select>
         </label>
-    <p>Connection, scanning and notification settings are in Shoko Server settings under Plugins, Shoko Arr.</p>
+        <label><input id="settings-include-specials" type="checkbox" /> Include Specials</label>
+        <label><input id="settings-hide-unaired" type="checkbox" /> Hide Unaired Episodes</label>
+        <label>Notification Webhook URL <input id="settings-webhook" type="password" placeholder="Discord-compatible webhook (optional)" /></label>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="save-settings" class="primary">Save</button>
+    </div>
+    <p id="settings-status"></p>
   </section>
 
   <section id="pending-panel" class="panel hidden">

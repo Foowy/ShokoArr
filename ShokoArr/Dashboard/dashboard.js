@@ -215,7 +215,9 @@ async function toggleProfileEditor(row, series) {
   `;
   row.appendChild(editor);
 
-  const options = await fetchJson('/Settings/sonarr-options');
+  const stored = await fetchJson('/Settings');
+  const settings = { baseUrl: stored.Data.BaseUrl, apiKey: '', scanIntervalHours: 0, includeSpecials: false, hideUnaired: false, notificationWebhookUrl: '' };
+  const options = await fetchJson('/Settings/sonarr-options', { method: 'POST', body: JSON.stringify(settings) });
   if (options.Success) {
     const qualitySelect = editor.querySelector('.profile-editor-quality');
     for (const p of options.Data.qualityProfiles || []) {
@@ -345,6 +347,90 @@ async function checkConnectionHealth() {
 
 checkConnectionHealth();
 setInterval(() => { if (!document.hidden) checkConnectionHealth(); }, HEALTH_CHECK_INTERVAL_MS);
+
+let savedQualityProfileId = null;
+let savedRootFolderPath = null;
+let savedRadarrQualityProfileId = null;
+let savedRadarrRootFolderPath = null;
+
+function currentSettingsForm() {
+  return {
+    baseUrl: document.getElementById('settings-url').value,
+    apiKey: document.getElementById('settings-key').value,
+    scanIntervalHours: Number(document.getElementById('settings-interval').value),
+    includeSpecials: document.getElementById('settings-include-specials').checked,
+    hideUnaired: document.getElementById('settings-hide-unaired').checked,
+    notificationWebhookUrl: document.getElementById('settings-webhook').value,
+  };
+}
+
+function populateSelect(id, items, valueKey, labelKey, selectedValue) {
+  const select = document.getElementById(id);
+  select.innerHTML = '';
+  for (const item of items || []) {
+    const option = document.createElement('option');
+    option.value = item[valueKey];
+    option.textContent = item[labelKey];
+    if (String(item[valueKey]) === String(selectedValue))
+      option.selected = true;
+    select.appendChild(option);
+  }
+}
+
+async function loadSonarrOptions(settings) {
+  const result = await fetchJson('/Settings/sonarr-options', { method: 'POST', body: JSON.stringify(settings) });
+  if (!result.Success) {
+    setStatus(`Failed to load Sonarr options: ${result.Message}`, false);
+    return;
+  }
+  populateSelect('settings-quality-profile', result.Data.qualityProfiles, 'Id', 'Name', savedQualityProfileId);
+  populateSelect('settings-root-folder', result.Data.rootFolders, 'Path', 'Path', savedRootFolderPath);
+}
+
+async function loadRadarrOptions(settings) {
+  const result = await fetchJson('/RadarrSettings/radarr-options', { method: 'POST', body: JSON.stringify(settings) });
+  if (!result.Success) {
+    setStatus(`Failed to load Radarr options: ${result.Message}`, false);
+    return;
+  }
+  populateSelect('radarr-settings-quality-profile', result.Data.qualityProfiles, 'Id', 'Name', savedRadarrQualityProfileId);
+  populateSelect('radarr-settings-root-folder', result.Data.rootFolders, 'Path', 'Path', savedRadarrRootFolderPath);
+}
+
+async function loadSettings() {
+  const result = await fetchJson('/Settings');
+  document.getElementById('settings-url').value = result.Data.BaseUrl || '';
+  // Never populate the actual key into .value: the field must stay blank so save-with-no-key
+  // (currentSettingsForm's apiKey: '') keeps hitting the backend's "preserve existing key" path.
+  // The placeholder is just a visual "a key is saved" indicator, not the key itself.
+  document.getElementById('settings-key').placeholder = result.Data.ApiKey ? 'Key saved (leave blank to keep)' : '';
+  document.getElementById('settings-webhook').placeholder = result.Data.NotificationWebhookUrl ? 'Webhook saved (leave blank to keep)' : '';
+  document.getElementById('settings-interval').value = result.Data.ScanIntervalHours;
+  document.getElementById('settings-include-specials').checked = result.Data.IncludeSpecials;
+  document.getElementById('settings-hide-unaired').checked = result.Data.HideUnaired;
+  savedQualityProfileId = result.Data.QualityProfileId;
+  savedRootFolderPath = result.Data.RootFolderPath;
+  populateSelect('settings-quality-profile', savedQualityProfileId ? [{ Id: savedQualityProfileId, Name: `#${savedQualityProfileId}` }] : [], 'Id', 'Name', savedQualityProfileId);
+  populateSelect('settings-root-folder', savedRootFolderPath ? [{ Path: savedRootFolderPath }] : [], 'Path', 'Path', savedRootFolderPath);
+  // The stored API key is masked here, not usable to call Sonarr — dropdowns above show the saved
+  // value as a placeholder option (name resolved server-side below, or falls back to the bare ID);
+  // Test Connection (re-entering the real key) repopulates them with the full live list from Sonarr.
+  if (savedQualityProfileId) {
+    const profileResult = await fetchJson('/Settings/quality-profile');
+    if (profileResult.Success)
+      populateSelect('settings-quality-profile', [profileResult.Data], 'Id', 'Name', savedQualityProfileId);
+    else
+      setStatus(`Showing profile #${savedQualityProfileId} — couldn't resolve its name: ${profileResult.Message}`, false);
+  }
+
+  const radarrResult = await fetchJson('/RadarrSettings');
+  document.getElementById('radarr-settings-url').value = radarrResult.Data.BaseUrl || '';
+  document.getElementById('radarr-settings-key').placeholder = radarrResult.Data.ApiKey ? 'Key saved (leave blank to keep)' : '';
+  savedRadarrQualityProfileId = radarrResult.Data.QualityProfileId;
+  savedRadarrRootFolderPath = radarrResult.Data.RootFolderPath;
+  populateSelect('radarr-settings-quality-profile', savedRadarrQualityProfileId ? [{ Id: savedRadarrQualityProfileId, Name: `#${savedRadarrQualityProfileId}` }] : [], 'Id', 'Name', savedRadarrQualityProfileId);
+  populateSelect('radarr-settings-root-folder', savedRadarrRootFolderPath ? [{ Path: savedRadarrRootFolderPath }] : [], 'Path', 'Path', savedRadarrRootFolderPath);
+}
 
 document.getElementById('scan-now').onclick = async () => {
   const result = await fetchJson('/Scan', { method: 'POST' });
@@ -585,7 +671,57 @@ document.getElementById('open-suggestions').onclick = () => {
     loadSuggestions();
 };
 
+function setStatus(text, ok) {
+  const el = document.getElementById('settings-status');
+  el.textContent = text;
+  el.classList.toggle('ok', ok === true);
+  el.classList.toggle('err', ok === false);
+}
+
+document.getElementById('test-connection').onclick = async () => {
+  const settings = currentSettingsForm();
+  const result = await fetchJson('/Settings/test-connection', { method: 'POST', body: JSON.stringify(settings) });
+  setStatus(result.Success ? 'Connected.' : `Failed: ${result.Message}`, result.Success);
+  if (result.Success)
+    await loadSonarrOptions(settings);
+};
+
+document.getElementById('radarr-test-connection').onclick = async () => {
+  const settings = {
+    baseUrl: document.getElementById('radarr-settings-url').value,
+    apiKey: document.getElementById('radarr-settings-key').value,
+  };
+  const result = await fetchJson('/RadarrSettings/test-connection', { method: 'POST', body: JSON.stringify(settings) });
+  setStatus(result.Success ? 'Radarr connected.' : `Radarr failed: ${result.Message}`, result.Success);
+  if (result.Success)
+    await loadRadarrOptions(settings);
+};
+
+document.getElementById('save-settings').onclick = async () => {
+  const settings = {
+    ...currentSettingsForm(),
+    qualityProfileId: Number(document.getElementById('settings-quality-profile').value) || null,
+    rootFolderPath: document.getElementById('settings-root-folder').value || null,
+  };
+  await fetchJson('/Settings', { method: 'PUT', body: JSON.stringify(settings) });
+
+  const radarrSettings = {
+    baseUrl: document.getElementById('radarr-settings-url').value,
+    apiKey: document.getElementById('radarr-settings-key').value,
+    qualityProfileId: Number(document.getElementById('radarr-settings-quality-profile').value) || null,
+    rootFolderPath: document.getElementById('radarr-settings-root-folder').value || null,
+  };
+  await fetchJson('/RadarrSettings', { method: 'PUT', body: JSON.stringify(radarrSettings) });
+  document.getElementById('radarr-settings-key').value = '';
+
+  setStatus('Saved.', true);
+  document.getElementById('settings-key').value = '';
+  document.getElementById('settings-webhook').value = '';
+  await loadSettings();
+};
+
 initTheme();
 document.getElementById('live-refresh').checked = localStorage.getItem(LIVE_REFRESH_STORAGE_KEY) === '1';
 setLiveRefresh(document.getElementById('live-refresh').checked);
+loadSettings();
 loadScanResults();

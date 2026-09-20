@@ -62,4 +62,66 @@ public class ShokoArrConfigurationTests
         Assert.Equal(3, settings.QualityProfileId);
         Assert.Equal("/movies", settings.RootFolderPath);
     }
+
+    [Fact]
+    public void ApplySonarr_CopiesFieldsAndClampsInterval_LeavingRadarrAlone()
+    {
+        var config = new ShokoArrConfiguration { RadarrUrl = "http://radarr", RadarrApiKey = "rk" };
+
+        config.ApplySonarr(new SonarrSettings { BaseUrl = "http://s", ApiKey = "k", QualityProfileId = 3, RootFolderPath = "/a", ScanIntervalHours = 1000, IncludeSpecials = false, HideUnaired = true, NotificationWebhookUrl = "http://h" });
+
+        var s = config.ToSonarrSettings();
+        Assert.Equal("http://s", s.BaseUrl);
+        Assert.Equal("k", s.ApiKey);
+        Assert.Equal(3, s.QualityProfileId);
+        Assert.Equal("/a", s.RootFolderPath);
+        Assert.Equal(720, s.ScanIntervalHours);
+        Assert.False(s.IncludeSpecials);
+        Assert.True(s.HideUnaired);
+        Assert.Equal("http://h", s.NotificationWebhookUrl);
+        Assert.Equal("http://radarr", config.RadarrUrl);
+        Assert.Equal("rk", config.RadarrApiKey);
+    }
+
+    [Fact]
+    public void ApplyRadarr_CopiesFields_LeavingSonarrAlone()
+    {
+        var config = new ShokoArrConfiguration { SonarrUrl = "http://s", ScanIntervalHours = 5 };
+
+        config.ApplyRadarr(new RadarrSettings { BaseUrl = "http://r", ApiKey = "k", QualityProfileId = 2, RootFolderPath = "/m" });
+
+        var r = config.ToRadarrSettings();
+        Assert.Equal("http://r", r.BaseUrl);
+        Assert.Equal("k", r.ApiKey);
+        Assert.Equal(2, r.QualityProfileId);
+        Assert.Equal("/m", r.RootFolderPath);
+        Assert.Equal("http://s", config.SonarrUrl);
+        Assert.Equal(5, config.ScanIntervalHours);
+    }
+
+    [Fact]
+    public void ApplySonarr_KeepsRealOptionLabelWhenIdIsAnOption()
+    {
+        var config = new ShokoArrConfiguration { SonarrQualityProfile = new SelectComponent<int>([new(7, "HD", isSelected: false), new(8, "SD", isSelected: true)]) };
+
+        config.ApplySonarr(new SonarrSettings { QualityProfileId = 7 });
+
+        Assert.Equal(2, config.SonarrQualityProfile.Options.Count);
+        Assert.Equal(7, config.SonarrQualityProfile.SelectedValue);
+        Assert.Equal("HD", config.SonarrQualityProfile.Options.First(o => o.Value == 7).Label);
+    }
+
+    [Fact]
+    public void ApplySonarr_UnknownIdGetsPlaceholderLabel_NullClearsSelection()
+    {
+        var config = new ShokoArrConfiguration();
+
+        config.ApplySonarr(new SonarrSettings { QualityProfileId = 9, RootFolderPath = "/x" });
+        Assert.Equal("#9", config.SonarrQualityProfile.Options.Single().Label);
+        Assert.Equal("/x", config.SonarrRootFolder.SelectedValue);
+
+        config.ApplySonarr(new SonarrSettings());
+        Assert.False(config.SonarrQualityProfile.HasSelectedValue);
+        Assert.False(config.SonarrRootFolder.HasSelectedValue);
+    }
 }
