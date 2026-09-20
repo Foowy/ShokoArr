@@ -13,7 +13,7 @@ public record RadarrSearchTitleRequest(string Title);
 public record AddRadarrDiscoveryRequest(int TmdbId, string Title);
 
 /// <summary>Endpoints for matching and adding movie-type suggestions to Radarr. Mirrors SonarrController's discovery-flow endpoints (search-title, add-discovery).</summary>
-public class RadarrController(RadarrClient radarrClient, ScanCacheStore cacheStore, NotificationService notificationService) : ShokoArrBaseController
+public class RadarrController(RadarrClient radarrClient, NotificationService notificationService, ISettingsSource settingsSource) : ShokoArrBaseController
 {
     /// <summary>Searches Radarr by title for a movie-type suggestion, which has no TMDB link to auto-resolve from.</summary>
     /// <param name="request">The title to search for.</param>
@@ -21,7 +21,7 @@ public class RadarrController(RadarrClient radarrClient, ScanCacheStore cacheSto
     [HttpPost("search-title")]
     public async Task<IActionResult> SearchTitle([FromBody] RadarrSearchTitleRequest request)
     {
-        var settings = cacheStore.GetRadarrSettings();
+        var settings = settingsSource.GetRadarr();
         var result = await radarrClient.LookupByTitleAsync(settings, request.Title);
         return Ok(new ApiResponse<object>(Success: result.Success, Message: result.ErrorMessage, Data: result.Data));
     }
@@ -32,7 +32,7 @@ public class RadarrController(RadarrClient radarrClient, ScanCacheStore cacheSto
     [HttpPost("add-discovery")]
     public async Task<IActionResult> AddDiscovery([FromBody] AddRadarrDiscoveryRequest request)
     {
-        var settings = cacheStore.GetRadarrSettings();
+        var settings = settingsSource.GetRadarr();
         if (settings.QualityProfileId is null || string.IsNullOrEmpty(settings.RootFolderPath))
             return BadRequest(new ApiResponse<object>(Success: false, Message: "Quality profile and root folder must be configured in Radarr Settings before adding a movie.", Data: null));
 
@@ -40,7 +40,7 @@ public class RadarrController(RadarrClient radarrClient, ScanCacheStore cacheSto
         if (!added.Success)
             return Conflict(new ApiResponse<object>(Success: false, Message: added.ErrorMessage, Data: null));
 
-        var notifySettings = cacheStore.GetSettings();
+        var notifySettings = settingsSource.GetSonarr();
         await notificationService.NotifyAsync(notifySettings, $"Added **{request.Title}** to Radarr (movie discovery, monitored and searching)");
         return Ok(new ApiResponse<object>(Success: true, Message: null, Data: null));
     }

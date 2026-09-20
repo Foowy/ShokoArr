@@ -14,7 +14,7 @@ public record SetSeriesSpecialsRequest(bool? IncludeSpecials);
 public record SetSeriesSonarrOverrideRequest(int? QualityProfileId, string? RootFolderPath);
 
 /// <summary>Endpoints for running and reading missing-episode scans.</summary>
-public class ScanController(MissingEpisodeScanner scanner, ScanCacheStore cacheStore, IMetadataService metadataService, SonarrClient sonarrClient, Services.RelatedSeriesFinder relatedSeriesFinder) : ShokoArrBaseController
+public class ScanController(MissingEpisodeScanner scanner, ScanCacheStore cacheStore, IMetadataService metadataService, SonarrClient sonarrClient, Services.RelatedSeriesFinder relatedSeriesFinder, ISettingsSource settingsSource) : ShokoArrBaseController
 {
     /// <summary>Runs a missing-episode scan immediately and persists the result as the current snapshot.</summary>
     /// <returns>The freshly computed scan snapshot.</returns>
@@ -79,7 +79,7 @@ public class ScanController(MissingEpisodeScanner scanner, ScanCacheStore cacheS
         if (entry is null)
             return NotFound(new ApiResponse<object>(Success: false, Message: "No pending search for that series/episode.", Data: null));
 
-        var settings = cacheStore.GetSettings();
+        var settings = settingsSource.GetSonarr();
         var result = await sonarrClient.UnmonitorEpisodesAsync(settings, [entry.SonarrEpisodeId]);
         if (!result.Success)
             return Ok(new ApiResponse<object>(Success: false, Message: $"Failed to unmonitor in Sonarr: {result.ErrorMessage}", Data: cacheStore.GetPendingSearches()));

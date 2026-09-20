@@ -24,6 +24,7 @@ public class ServiceRegistration : IPluginServiceRegistration
 
         serviceCollection.AddSingleton(provider => provider.GetRequiredService<IHttpClientFactory>().CreateClient(clientName));
         serviceCollection.AddSingleton(new ScanCacheStore(applicationPaths.DataPath));
+        serviceCollection.AddSingleton<ISettingsSource, NativeSettingsSource>();
         serviceCollection.AddSingleton<MissingEpisodeScanner>();
         serviceCollection.AddSingleton<SonarrClient>();
         serviceCollection.AddSingleton<RadarrClient>();

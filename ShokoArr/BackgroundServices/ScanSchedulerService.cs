@@ -6,7 +6,7 @@ using ShokoArr.Services;
 namespace ShokoArr.BackgroundServices;
 
 /// <summary>Runs the missing-episode scan on a configurable interval, in addition to the on-demand dashboard trigger.</summary>
-public class ScanSchedulerService(ISystemService systemService, MissingEpisodeScanner scanner, ScanCacheStore cacheStore) : BackgroundService
+public class ScanSchedulerService(ISystemService systemService, MissingEpisodeScanner scanner, ScanCacheStore cacheStore, ISettingsSource settingsSource) : BackgroundService
 {
     private static readonly Logger s_logger = LogManager.GetCurrentClassLogger();
 
@@ -24,7 +24,7 @@ public class ScanSchedulerService(ISystemService systemService, MissingEpisodeSc
         {
             try
             {
-                var intervalHours = cacheStore.GetSettings().ScanIntervalHours;
+                var intervalHours = settingsSource.GetSonarr().ScanIntervalHours;
                 if (intervalHours <= 0)
                 {
                     // Scheduled scanning disabled — re-check hourly in case the user re-enables it.

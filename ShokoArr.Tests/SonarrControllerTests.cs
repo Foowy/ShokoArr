@@ -14,13 +14,14 @@ public class SonarrControllerTests : IDisposable
 {
     private readonly string _tempDir;
     private readonly ScanCacheStore _cacheStore;
+    private readonly FakeSettingsSource _settings = new();
 
     public SonarrControllerTests()
     {
         _tempDir = Path.Combine(Path.GetTempPath(), "shoko-sonarr-controller-tests-" + Guid.NewGuid());
         Directory.CreateDirectory(_tempDir);
         _cacheStore = new ScanCacheStore(_tempDir);
-        _cacheStore.SaveSettings(new SonarrSettings { BaseUrl = "http://sonarr.local:8989", ApiKey = "testkey" });
+        _settings.Sonarr = new SonarrSettings { BaseUrl = "http://sonarr.local:8989", ApiKey = "testkey" };
     }
 
     public void Dispose()
@@ -35,7 +36,7 @@ public class SonarrControllerTests : IDisposable
             Task.FromResult(respond(request));
     }
 
-    private static SonarrController MakeController(Func<HttpRequestMessage, HttpResponseMessage> respond, ScanCacheStore cacheStore)
+    private SonarrController MakeController(Func<HttpRequestMessage, HttpResponseMessage> respond, ScanCacheStore cacheStore)
     {
         var handler = new FakeHandler(respond);
         var httpClient = new HttpClient(handler);
@@ -43,7 +44,7 @@ public class SonarrControllerTests : IDisposable
         var notificationService = new NotificationService(httpClient); // no webhook configured — NotifyAsync no-ops
         var matcher = new SeriesMatcher(sonarrClient);
         var searchService = new SonarrSearchService(sonarrClient, cacheStore, notificationService);
-        return new SonarrController(matcher, searchService, sonarrClient, cacheStore, notificationService);
+        return new SonarrController(matcher, searchService, sonarrClient, cacheStore, notificationService, _settings);
     }
 
     private static HttpResponseMessage JsonResponse(HttpStatusCode status, object body) =>
@@ -108,7 +109,7 @@ public class SonarrControllerTests : IDisposable
     [Fact]
     public async Task AddDiscovery_SonarrAddFails_ReturnsConflict()
     {
-        _cacheStore.SaveSettings(new SonarrSettings { BaseUrl = "http://sonarr.local:8989", ApiKey = "testkey", QualityProfileId = 1, RootFolderPath = "/anime" });
+        _settings.Sonarr = new SonarrSettings { BaseUrl = "http://sonarr.local:8989", ApiKey = "testkey", QualityProfileId = 1, RootFolderPath = "/anime" };
         var controller = MakeController(
             _ => new HttpResponseMessage(HttpStatusCode.InternalServerError),
             _cacheStore);
@@ -123,7 +124,7 @@ public class SonarrControllerTests : IDisposable
     [Fact]
     public async Task AddDiscovery_Success_ReturnsOk()
     {
-        _cacheStore.SaveSettings(new SonarrSettings { BaseUrl = "http://sonarr.local:8989", ApiKey = "testkey", QualityProfileId = 1, RootFolderPath = "/anime" });
+        _settings.Sonarr = new SonarrSettings { BaseUrl = "http://sonarr.local:8989", ApiKey = "testkey", QualityProfileId = 1, RootFolderPath = "/anime" };
         var controller = MakeController(
             _ => JsonResponse(HttpStatusCode.OK, new { id = 5 }),
             _cacheStore);

@@ -27,54 +27,19 @@ public class ScanCacheStoreTests : IDisposable
     [Fact]
     public void GetSettings_WhenNoneSaved_ReturnsDefaults()
     {
-        var settings = _store.GetSettings();
+        var settings = _store.GetLegacySettings();
 
         Assert.Null(settings.BaseUrl);
         Assert.Equal(24, settings.ScanIntervalHours);
     }
 
     [Fact]
-    public void SaveSettings_ThenGetSettings_RoundTrips()
-    {
-        _store.SaveSettings(new SonarrSettings { BaseUrl = "http://sonarr:8989", ApiKey = "abc123", ScanIntervalHours = 12 });
-
-        var settings = _store.GetSettings();
-
-        Assert.Equal("http://sonarr:8989", settings.BaseUrl);
-        Assert.Equal("abc123", settings.ApiKey);
-        Assert.Equal(12, settings.ScanIntervalHours);
-    }
-
-    [Fact]
-    public void SaveRadarrSettings_ThenGetRadarrSettings_RoundTrips()
-    {
-        _store.SaveRadarrSettings(new RadarrSettings { BaseUrl = "http://radarr:7878", ApiKey = "xyz789", QualityProfileId = 3, RootFolderPath = "/movies" });
-
-        var settings = _store.GetRadarrSettings();
-
-        Assert.Equal("http://radarr:7878", settings.BaseUrl);
-        Assert.Equal("xyz789", settings.ApiKey);
-        Assert.Equal(3, settings.QualityProfileId);
-        Assert.Equal("/movies", settings.RootFolderPath);
-    }
-
-    [Fact]
     public void GetRadarrSettings_WhenNoneSaved_ReturnsDefaults()
     {
-        var settings = _store.GetRadarrSettings();
+        var settings = _store.GetLegacyRadarrSettings();
 
         Assert.Null(settings.BaseUrl);
         Assert.Null(settings.QualityProfileId);
-    }
-
-    [Fact]
-    public void SaveSettings_ThenGetSettings_RoundTripsIncludeSpecials()
-    {
-        _store.SaveSettings(new SonarrSettings { IncludeSpecials = false });
-
-        var settings = _store.GetSettings();
-
-        Assert.False(settings.IncludeSpecials);
     }
 
     [Fact]
@@ -214,7 +179,9 @@ public class ScanCacheStoreTests : IDisposable
         try
         {
             using var store = new ScanCacheStore(tempDir);
-            Assert.True(store.GetSettings().IncludeSpecials);
+            var legacy = store.GetLegacySettings();
+            Assert.Equal("http://sonarr:8989", legacy.BaseUrl);
+            Assert.True(legacy.IncludeSpecials);
         }
         finally
         {

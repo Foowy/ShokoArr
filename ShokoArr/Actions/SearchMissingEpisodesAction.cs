@@ -9,7 +9,7 @@ namespace ShokoArr.Actions;
 /// Native equivalent of the dashboard's per-series "Search" button, scoped to all missing episodes rather
 /// than a hand-picked subset — for per-episode control, use the dashboard directly.
 /// </summary>
-public class SearchMissingEpisodesAction(SeriesMatcher matcher, SonarrSearchService searchService, SonarrClient sonarrClient, ScanCacheStore cacheStore) : SeriesAction
+public class SearchMissingEpisodesAction(SeriesMatcher matcher, SonarrSearchService searchService, SonarrClient sonarrClient, ScanCacheStore cacheStore, ISettingsSource settingsSource) : SeriesAction
 {
     /// <inheritdoc/>
     public override string Name => "Search Missing Episodes in Sonarr";
@@ -55,7 +55,7 @@ public class SearchMissingEpisodesAction(SeriesMatcher matcher, SonarrSearchServ
     /// <summary>Resolves this series' Sonarr TVDB ID, if it has a confirmed (not merely candidate) match.</summary>
     private async Task<(Config.SonarrSettings Settings, int TvdbId, string? Error)> ResolveAsync(SeriesMissingResult series, CancellationToken token)
     {
-        var settings = cacheStore.GetSettings();
+        var settings = settingsSource.GetSonarr();
         if (series.TvdbId is null)
             return (settings, 0, "No Sonarr match for this series yet — use the ShokoArr dashboard to resolve or confirm one first.");
 

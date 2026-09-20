@@ -37,33 +37,21 @@ public class ScanCacheStore : IDisposable
     public void Dispose() => _db.Dispose();
 
     /// <summary>Gets the current Sonarr settings, or defaults if none have been saved.</summary>
-    public SonarrSettings GetSettings()
+    // Read-only migration source; the native configuration is authoritative.
+    public SonarrSettings GetLegacySettings()
     {
         var col = _db.GetCollection<SettingsDocument>(SettingsCollectionName);
         var doc = col.FindById(SettingsDocumentId);
         return doc?.Settings ?? new SonarrSettings();
     }
 
-    /// <summary>Persists Sonarr settings, replacing any previously saved settings.</summary>
-    public void SaveSettings(SonarrSettings settings)
-    {
-        var col = _db.GetCollection<SettingsDocument>(SettingsCollectionName);
-        col.Upsert(new SettingsDocument { Id = SettingsDocumentId, Settings = settings });
-    }
-
     /// <summary>Gets the current Radarr settings, or defaults if none have been saved.</summary>
-    public RadarrSettings GetRadarrSettings()
+    // Read-only migration source; the native configuration is authoritative.
+    public RadarrSettings GetLegacyRadarrSettings()
     {
         var col = _db.GetCollection<RadarrSettingsDocument>(RadarrSettingsCollectionName);
         var doc = col.FindById(SettingsDocumentId);
         return doc?.Settings ?? new RadarrSettings();
-    }
-
-    /// <summary>Persists Radarr settings, replacing any previously saved settings.</summary>
-    public void SaveRadarrSettings(RadarrSettings settings)
-    {
-        var col = _db.GetCollection<RadarrSettingsDocument>(RadarrSettingsCollectionName);
-        col.Upsert(new RadarrSettingsDocument { Id = SettingsDocumentId, Settings = settings });
     }
 
     /// <summary>Sets (or clears, when <paramref name="includeSpecials"/> is null) the specials override for a series, preserving any Sonarr quality-profile/root-folder override already set.</summary>
