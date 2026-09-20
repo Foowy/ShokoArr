@@ -86,6 +86,43 @@ public class ShokoArrConfiguration : IConfiguration
         RootFolderPath = RadarrRootFolder.HasSelectedValue ? RadarrRootFolder.SelectedValue : null,
     };
 
+    public void ApplySonarr(SonarrSettings s)
+    {
+        SonarrUrl = s.BaseUrl;
+        SonarrApiKey = s.ApiKey;
+        SonarrQualityProfile = ChooseProfile(SonarrQualityProfile, s.QualityProfileId);
+        SonarrRootFolder = ChooseFolder(SonarrRootFolder, s.RootFolderPath);
+        ScanIntervalHours = Math.Clamp(s.ScanIntervalHours, 0, 720);
+        IncludeSpecials = s.IncludeSpecials;
+        HideUnaired = s.HideUnaired;
+        NotificationWebhookUrl = s.NotificationWebhookUrl;
+    }
+
+    public void ApplyRadarr(RadarrSettings s)
+    {
+        RadarrUrl = s.BaseUrl;
+        RadarrApiKey = s.ApiKey;
+        RadarrQualityProfile = ChooseProfile(RadarrQualityProfile, s.QualityProfileId);
+        RadarrRootFolder = ChooseFolder(RadarrRootFolder, s.RootFolderPath);
+    }
+
+    public static SelectComponent<int> ChooseProfile(SelectComponent<int> current, int? id) =>
+        id is { } v ? Choose(current, v, $"#{v}") : new();
+
+    public static SelectComponent<string> ChooseFolder(SelectComponent<string> current, string? path) =>
+        string.IsNullOrEmpty(path) ? new() : Choose(current, path, path);
+
+    private static SelectComponent<T> Choose<T>(SelectComponent<T> current, T value, string label) where T : IEquatable<T>
+    {
+        if (current.Options.Any(o => EqualityComparer<T>.Default.Equals(o.Value, value)))
+        {
+            current.SelectedValues = [value];
+            return current;
+        }
+
+        return new([new(value, label, isSelected: true)]);
+    }
+
     [CustomAction(Theme = DisplayColorTheme.Primary, Position = DisplayButtonPosition.Top, SectionName = "Sonarr")]
     public ConfigurationActionResult TestSonarr(ConfigurationActionContext<ShokoArrConfiguration> context)
     {
