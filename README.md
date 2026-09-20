@@ -27,7 +27,7 @@ Shoko tracks what anime episodes you already have. Sonarr downloads episodes for
 - **Bulk actions** — multi-select series to apply a specials override or trigger Add-to-Sonarr/Search across all of them at once.
 - **Notifies** an optional Discord-compatible webhook when a search is triggered, a movie/series discovery is added, or a stale pending entry expires.
 - **Registers native Shoko Actions**: "Scan for Missing Episodes" (global) and "Search Missing Episodes in Sonarr" (per series) appear in Shoko's Actions menu, alongside the dashboard.
-- **Shows Sonarr's live reachability** in the dashboard header at a glance, instead of only after clicking Test Connection.
+- **Shows Sonarr's live reachability** in the dashboard header at a glance, instead of only after pressing Test.
 
 ## What it's not
 
@@ -51,14 +51,17 @@ http://<your-shoko-host>:<port>/api/plugin/ShokoSonarr/dashboard
 - **Pending Searches** — view and cancel any in-flight Sonarr search the plugin has triggered but Shoko hasn't confirmed as imported yet.
 - **History** — a log of past outcomes (triggered, imported, cancelled, expired) for episodes that were previously pending, since Pending Searches only shows what's still in-flight.
 - **Theme picker** — System (follows OS dark/light), Ember, Deep Teal, AniBlackle, or Paper.
-- **Settings** — separate Sonarr and Radarr connection sections (base URL/API key/quality profile/root folder each), scan interval, include-specials, hide-unaired, and an optional Discord-compatible notification webhook.
+- **Settings** — moved to Shoko's native plugin configuration (see First-time setup); the dashboard only links there.
 
 ### First-time setup
 
-1. Open Settings, enter your Sonarr base URL and API key (Sonarr → Settings → General).
-2. Click **Test Connection** to populate the Quality Profile and Root Folder dropdowns.
-3. Pick a profile and folder, then **Save**.
-4. Optionally repeat steps 1–3 in the Radarr Connection section if you want movie-type suggestions routed there.
+1. Open Shoko WebUI, **Settings**, **Plugins**, **Shoko Arr**.
+2. Enter your Sonarr URL and API key (Sonarr, Settings, General).
+3. Press the Sonarr **Test** button to load quality profiles and root folders.
+4. Pick a profile and folder, then **Save**.
+5. Optionally repeat for Radarr if you want movie-type suggestions routed there. Scan interval (hours, 0 disables), include specials, hide unaired and the notification webhook are in the same page.
+
+Existing settings are migrated automatically on first start.
 
 > Sonarr/Radarr must be directly reachable from the Shoko host. If either sits behind a reverse proxy with SSO/forward-auth, use its internal LAN address instead — API-key requests can't pass through an SSO login redirect.
 
@@ -81,7 +84,7 @@ dotnet publish ShokoArr -c Release -o <output-dir>
 # copy <output-dir>/* into Shoko's plugins/ShokoArr/ directory, then restart Shoko Server
 ```
 
-Plugin load only happens at ShokoServer startup — copying the DLL alone has no effect. Requires a Shoko Server build with plugin Abstractions 6.0 (currently the `dev`/`daily` channel).
+Plugin load only happens at ShokoServer startup — copying the DLL alone has no effect. Requires a Shoko Server build with plugin Abstractions 6.0 (currently the `dev`/`daily` channel); the settings UI also needs plugin configuration support in that build.
 
 ## Building & testing
 
