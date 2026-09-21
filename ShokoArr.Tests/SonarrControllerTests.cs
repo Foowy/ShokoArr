@@ -41,7 +41,7 @@ public class SonarrControllerTests : IDisposable
         var handler = new FakeHandler(respond);
         var httpClient = new HttpClient(handler);
         var sonarrClient = new SonarrClient(httpClient);
-        var notificationService = new NotificationService(httpClient); // no webhook configured — NotifyAsync no-ops
+        var notificationService = new NotificationService(httpClient); // no webhook configured - NotifyAsync no-ops
         var matcher = new SeriesMatcher(sonarrClient);
         var searchService = new SonarrSearchService(sonarrClient, cacheStore, notificationService);
         return new SonarrController(matcher, searchService, sonarrClient, cacheStore, notificationService, _settings);

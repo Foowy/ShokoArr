@@ -64,7 +64,7 @@ public class ScanController(MissingEpisodeScanner scanner, ScanCacheStore cacheS
         return snapshot is null ? NoContent() : Ok(new ApiResponse<object>(Success: true, Message: null, Data: snapshot));
     }
 
-    /// <summary>Gets all episodes currently pending reconciliation with Sonarr — searches the plugin has triggered but Shoko hasn't yet confirmed as imported.</summary>
+    /// <summary>Gets all episodes currently pending reconciliation with Sonarr - searches the plugin has triggered but Shoko hasn't yet confirmed as imported.</summary>
     [HttpGet("pending")]
     public IActionResult GetPending() =>
         Ok(new ApiResponse<object>(Success: true, Message: null, Data: cacheStore.GetPendingSearches()));
@@ -94,7 +94,7 @@ public class ScanController(MissingEpisodeScanner scanner, ScanCacheStore cacheS
     public IActionResult GetHistory() =>
         Ok(new ApiResponse<object>(Success: true, Message: null, Data: cacheStore.GetHistory()));
 
-    /// <summary>Gets AniDB-related series the user owns zero episodes of, suggested from series they do own (sequels, prequels, side stories, etc.). Computed fresh on every call — no persistence.</summary>
+    /// <summary>Gets AniDB-related series the user owns zero episodes of, suggested from series they do own (sequels, prequels, side stories, etc.). Computed fresh on every call - no persistence.</summary>
     [HttpGet("related-suggestions")]
     public IActionResult GetRelatedSuggestions() =>
         Ok(new ApiResponse<object>(Success: true, Message: null, Data: relatedSeriesFinder.FindSuggestions()));

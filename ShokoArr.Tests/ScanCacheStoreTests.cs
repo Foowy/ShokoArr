@@ -165,7 +165,7 @@ public class ScanCacheStoreTests : IDisposable
         Directory.CreateDirectory(pluginDir);
         var dbPath = Path.Combine(pluginDir, ShokoArrConstants.LiteDbFileName);
 
-        // Simulate a settings doc saved before IncludeSpecials existed — the field is simply absent, not null.
+        // Simulate a settings doc saved before IncludeSpecials existed - the field is simply absent, not null.
         using (var db = new LiteDatabase(dbPath))
         {
             var col = db.GetCollection("settings");

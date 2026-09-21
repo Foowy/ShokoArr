@@ -49,7 +49,7 @@ public class ActionsTests : IDisposable
         Assert.NotNull(_cacheStore.GetLastScan());
     }
 
-    /// <summary>Sets a SeriesAction's protected Series context via reflection — the real setter is internal to Shoko.Abstractions (see IScopedAction), only settable by the framework at runtime.</summary>
+    /// <summary>Sets a SeriesAction's protected Series context via reflection - the real setter is internal to Shoko.Abstractions (see IScopedAction), only settable by the framework at runtime.</summary>
     private static void SetSeriesContext(SearchMissingEpisodesAction action, IShokoSeries series) =>
         typeof(SearchMissingEpisodesAction).BaseType!
             .GetProperty("Series", BindingFlags.NonPublic | BindingFlags.Instance)!

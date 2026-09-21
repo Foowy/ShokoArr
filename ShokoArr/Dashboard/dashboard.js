@@ -339,7 +339,7 @@ function setLiveRefresh(enabled) {
   clearInterval(liveRefreshTimer);
   liveRefreshTimer = null;
   if (enabled) {
-    // Just re-reads the last saved snapshot (cheap LiteDB read) — never triggers a rescan or Sonarr calls.
+    // Just re-reads the last saved snapshot (cheap LiteDB read) - never triggers a rescan or Sonarr calls.
     liveRefreshTimer = setInterval(() => { if (!document.hidden) loadScanResults(); }, LIVE_REFRESH_INTERVAL_MS);
   }
 }
@@ -433,7 +433,7 @@ async function loadSettings() {
   savedRootFolderPath = result.Data.RootFolderPath;
   populateSelect('settings-quality-profile', savedQualityProfileId ? [{ Id: savedQualityProfileId, Name: `#${savedQualityProfileId}` }] : [], 'Id', 'Name', savedQualityProfileId);
   populateSelect('settings-root-folder', savedRootFolderPath ? [{ Path: savedRootFolderPath }] : [], 'Path', 'Path', savedRootFolderPath);
-  // The stored API key is masked here, not usable to call Sonarr — dropdowns above show the saved
+  // The stored API key is masked here, not usable to call Sonarr - dropdowns above show the saved
   // value as a placeholder option (name resolved server-side below, or falls back to the bare ID);
   // Test Connection (re-entering the real key) repopulates them with the full live list from Sonarr.
   if (savedQualityProfileId) {
@@ -441,7 +441,7 @@ async function loadSettings() {
     if (profileResult.Success)
       populateSelect('settings-quality-profile', [profileResult.Data], 'Id', 'Name', savedQualityProfileId);
     else
-      setStatus(`Showing profile #${savedQualityProfileId} — couldn't resolve its name: ${profileResult.Message}`, false);
+      setStatus(`Showing profile #${savedQualityProfileId} - couldn't resolve its name: ${profileResult.Message}`, false);
   }
 
   const radarrResult = await fetchJson('/RadarrSettings');
@@ -498,6 +498,12 @@ function renderPending(entries, sonarrBaseUrl) {
     const episodeLabel = entry.EpisodeTitle || `AniDB ep ${entry.AnidbEpisodeId}`;
     meta.textContent = `${seriesLabel} · ${episodeLabel} · triggered ${new Date(entry.TriggeredAtUtc).toLocaleString()}`;
     row.appendChild(meta);
+    if (entry.FailedReconciliations > 0) {
+      const failed = document.createElement('span');
+      failed.className = 'pending-meta';
+      failed.textContent = `Sonarr unmonitor failed ${entry.FailedReconciliations}x: ${entry.LastError}`;
+      row.appendChild(failed);
+    }
     if (entry.SonarrTitleSlug && sonarrBaseUrl) {
       const sonarrLink = document.createElement('a');
       sonarrLink.href = `${sonarrBaseUrl.replace(/\/$/, '')}/series/${entry.SonarrTitleSlug}`;

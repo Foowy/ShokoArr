@@ -33,7 +33,7 @@ public record SonarrSeriesResource([property: JsonPropertyName("id")] int Id, [p
 /// <summary>Sonarr tag resource, as returned by Sonarr's v3 API.</summary>
 public record SonarrTagResource([property: JsonPropertyName("id")] int Id, [property: JsonPropertyName("label")] string Label);
 
-/// <summary>Typed HTTP client for Sonarr's v3 API. Never throws on HTTP/connectivity failure — all calls return a typed result.</summary>
+/// <summary>Typed HTTP client for Sonarr's v3 API. Never throws on HTTP/connectivity failure - all calls return a typed result.</summary>
 public class SonarrClient(HttpClient httpClient) : ArrClientBase(httpClient)
 {
     /// <summary>Looks up Sonarr series candidates by TVDB ID.</summary>
@@ -44,7 +44,7 @@ public class SonarrClient(HttpClient httpClient) : ArrClientBase(httpClient)
     public Task<ArrActionResult<List<SonarrSeriesLookupResult>>> LookupByTitleAsync(SonarrSettings settings, string title, CancellationToken ct = default) =>
         SendAsync<List<SonarrSeriesLookupResult>>(BuildRequest(HttpMethod.Get, settings, $"/api/v3/series/lookup?term={Uri.EscapeDataString(title)}"), ct);
 
-    /// <summary>Adds a series to Sonarr with seriesType "anime" (this plugin is an anime-only bridge). Defaults to monitoring disabled and no immediate search — the owned-series flow explicitly monitors and searches only specific missing episodes afterward. Pass monitorMode "all" and searchOnAdd true for the discovery flow (adding a wholly unowned series), which has no per-episode missing data to act on selectively.</summary>
+    /// <summary>Adds an anime series to Sonarr, unmonitored with no search by default; the owned-series flow then monitors only its missing episodes. The discovery flow passes monitorMode "all" and searchOnAdd true.</summary>
     public async Task<ArrActionResult<SonarrSeriesResource>> AddSeriesAsync(SonarrSettings settings, int tvdbId, string title, int qualityProfileId, string rootFolderPath, string monitorMode = "none", bool searchOnAdd = false, List<int>? tagIds = null, CancellationToken ct = default)
     {
         var request = BuildRequest(HttpMethod.Post, settings, "/api/v3/series");
@@ -102,7 +102,7 @@ public class SonarrClient(HttpClient httpClient) : ArrClientBase(httpClient)
         return created.Success ? ArrActionResult<int>.Ok(created.Data!.Id) : ArrActionResult<int>.Fail(created.ErrorMessage!);
     }
 
-    /// <summary>Adds a tag to an existing Sonarr series if not already present. Sonarr requires a full-resource PUT for updates, so this fetches the series as a mutable JSON node, adds the tag ID into its "tags" array if missing, and PUTs the whole node back unchanged otherwise.</summary>
+    /// <summary>Adds a tag to a Sonarr series if missing. Sonarr needs a full-resource PUT, so the fetched JSON node is edited and sent back whole.</summary>
     public async Task<ArrActionResult<bool>> UpdateSeriesTagAsync(SonarrSettings settings, int sonarrSeriesId, int tagId, CancellationToken ct = default)
     {
         var getResult = await SendAsync<JsonNode>(BuildRequest(HttpMethod.Get, settings, $"/api/v3/series/{sonarrSeriesId}"), ct).ConfigureAwait(false);

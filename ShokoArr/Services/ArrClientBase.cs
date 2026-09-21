@@ -5,7 +5,7 @@ using ShokoArr.Models;
 
 namespace ShokoArr.Services;
 
-/// <summary>Shared request-building and error-handling logic for typed *arr-family (Sonarr/Radarr) v3 API clients. Never throws on HTTP/connectivity failure — all calls return a typed result.</summary>
+/// <summary>Shared request-building and error-handling logic for typed *arr-family (Sonarr/Radarr) v3 API clients. Never throws on HTTP/connectivity failure - all calls return a typed result.</summary>
 public abstract class ArrClientBase(HttpClient httpClient)
 {
     private protected static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);

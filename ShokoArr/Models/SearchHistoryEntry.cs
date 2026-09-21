@@ -15,7 +15,7 @@ public enum SearchHistoryOutcome
     /// <summary>Reconciliation kept failing (e.g. the Sonarr episode was deleted out-of-band) until the pending entry's max age was reached.</summary>
     Expired,
 
-    /// <summary>The episode fell out of scan scope (e.g. a per-series specials-exclude override was set after the search was triggered), so the plugin stopped tracking it — it was not actually imported.</summary>
+    /// <summary>The episode fell out of scan scope (e.g. a per-series specials-exclude override was set after the search was triggered), so the plugin stopped tracking it - it was not actually imported.</summary>
     Descoped,
 }
 

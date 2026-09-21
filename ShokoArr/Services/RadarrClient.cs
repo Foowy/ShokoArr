@@ -5,14 +5,14 @@ using ShokoArr.Models;
 
 namespace ShokoArr.Services;
 
-/// <summary>Typed HTTP client for Radarr's v3 API. Never throws on HTTP/connectivity failure — all calls return a typed result. Mirrors SonarrClient's shape; reuses ArrActionResult/ArrQualityProfileResource/ArrRootFolderResource since Radarr's v3 API shares the same *arr-family conventions.</summary>
+/// <summary>Typed HTTP client for Radarr's v3 API. Never throws on HTTP/connectivity failure - all calls return a typed result. Mirrors SonarrClient.</summary>
 public class RadarrClient(HttpClient httpClient) : ArrClientBase(httpClient)
 {
-    /// <summary>Looks up Radarr movie candidates by free-text title — the only matching path for unowned suggestions, which have no TMDB link.</summary>
+    /// <summary>Looks up Radarr movie candidates by free-text title - the only matching path for unowned suggestions, which have no TMDB link.</summary>
     public Task<ArrActionResult<List<RadarrMovieLookupResult>>> LookupByTitleAsync(RadarrSettings settings, string title, CancellationToken ct = default) =>
         SendAsync<List<RadarrMovieLookupResult>>(BuildRequest(HttpMethod.Get, settings, $"/api/v3/movie/lookup?term={Uri.EscapeDataString(title)}"), ct);
 
-    /// <summary>Adds a movie to Radarr, monitored, with an optional immediate search. Radarr has no granular monitor mode like Sonarr — just a flat monitored flag plus searchForMovie.</summary>
+    /// <summary>Adds a movie to Radarr, monitored, with an optional immediate search. Radarr has no granular monitor mode like Sonarr - just a flat monitored flag plus searchForMovie.</summary>
     public async Task<ArrActionResult<int>> AddMovieAsync(RadarrSettings settings, int tmdbId, string title, int qualityProfileId, string rootFolderPath, bool searchOnAdd, CancellationToken ct = default)
     {
         var request = BuildRequest(HttpMethod.Post, settings, "/api/v3/movie");

@@ -294,7 +294,7 @@ public class MissingEpisodeScannerTests : IDisposable
     [Fact]
     public async Task Scan_PendingSearchNoLongerMissing_UnmonitorsAndClearsPending()
     {
-        var ownedEp = MakeEpisode(anidbId: 9000, number: 1, type: EpisodeType.Episode, hidden: false, videoCount: 1); // now has a file — no longer missing
+        var ownedEp = MakeEpisode(anidbId: 9000, number: 1, type: EpisodeType.Episode, hidden: false, videoCount: 1); // now has a file - no longer missing
 
         var series = new Mock<IShokoSeries>();
         series.Setup(s => s.ID).Returns(20);
@@ -556,7 +556,9 @@ public class MissingEpisodeScannerTests : IDisposable
         var exception = await Record.ExceptionAsync(() => scanner.ScanAsync());
 
         Assert.Null(exception);
-        Assert.Single(_cacheStore.GetPendingSearches());
+        var pending = Assert.Single(_cacheStore.GetPendingSearches());
+        Assert.Equal(1, pending.FailedReconciliations);
+        Assert.Contains("500", pending.LastError);
     }
 
     [Fact]
