@@ -15,6 +15,34 @@
   "icon_url": "https://raw.githubusercontent.com/Foowy/ShokoArr/master/assets/icon.png",
   "releases": [
     {
+      "version": "0.9.0",
+      "tag": "v0.9.0",
+      "source_revision": "db4bd349beda77664a5e1e91def4e28c452fb799",
+      "released_at": "2026-09-21T06:32:18Z",
+      "channel": "Stable",
+      "release_notes": "## What's Changed\n* Add CI hardening, community files, and editorconfig by @Foowy in https://github.com/Foowy/ShokoArr/pull/55\n* Run CI on the chaos runner when online, fall back to GitHub-hosted by @Foowy in https://github.com/Foowy/ShokoArr/pull/56\n* Retry dependency review until the dependency snapshot exists by @Foowy in https://github.com/Foowy/ShokoArr/pull/57\n* Page the Sonarr queue and apply episode status concurrently by @Foowy in https://github.com/Foowy/ShokoArr/pull/58\n* Show reconciliation failures on pending searches; trim long docs; use plain hyphens by @Foowy in https://github.com/Foowy/ShokoArr/pull/59\n* chore: bump version to 0.9.0 by @Foowy in https://github.com/Foowy/ShokoArr/pull/60\n\n\n**Full Changelog**: https://github.com/Foowy/ShokoArr/compare/v0.8.0...v0.9.0",
+      "archives": [
+        {
+          "runtime": "linux-arm64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/ShokoArr/releases/download/v0.9.0/ShokoArr-v0.9.0_linux-arm64.zip",
+          "checksum": "17aa00b9f3ac8c4512a68ae310b118b7e7244dc67c57a32ec6e4876ab54fd94e"
+        },
+        {
+          "runtime": "linux-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/ShokoArr/releases/download/v0.9.0/ShokoArr-v0.9.0_linux-x64.zip",
+          "checksum": "b30584dca51bf4a01a5fe813c499d1b8acfa1c8462815e9202ef09f7aacdb034"
+        },
+        {
+          "runtime": "win-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/ShokoArr/releases/download/v0.9.0/ShokoArr-v0.9.0_win-x64.zip",
+          "checksum": "9d18e55c91de81f2bed4aa46a195a54dd35c2b1bd7fee3749b41fcee10a1d2d9"
+        }
+      ]
+    },
+    {
       "version": "0.8.0",
       "tag": "v0.8.0",
       "source_revision": "4ea357b6603a0d1086267f0fa9fd2381af59b21d",
