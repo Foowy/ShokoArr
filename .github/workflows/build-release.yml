@@ -17,6 +17,7 @@ jobs:
   publish:
     name: Build & attach ${{ matrix.rid }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -53,6 +54,12 @@ jobs:
             echo "is_tag=true" >> $GITHUB_OUTPUT
             VERSION="${TAG#v}"
             VERSION_BASE=$(echo "$VERSION" | cut -d'.' -f1-3)
+
+            CSPROJ_VERSION=$(grep -oP '<Version>\K[^<]+' ShokoArr/ShokoArr.csproj)
+            if [[ "${VERSION_BASE%%-*}" != "$CSPROJ_VERSION" ]]; then
+              echo "::error::Tag $TAG does not match ShokoArr.csproj Version $CSPROJ_VERSION"
+              exit 1
+            fi
 
             if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
               IS_PRERELEASE=$(gh release view "$TAG" --repo "${{ github.repository }}" --json isPrerelease -q .isPrerelease)
@@ -122,6 +129,7 @@ jobs:
     # Run if triggered by release (published) or tag dispatch.
     if: startsWith(github.event.inputs.tag_name, 'v') || github.event_name == 'release'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
         with:
