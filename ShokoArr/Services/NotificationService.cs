@@ -4,7 +4,7 @@ using ShokoArr.Config;
 
 namespace ShokoArr.Services;
 
-/// <summary>Posts optional notifications to a Discord-compatible webhook. Never throws — a failed or unconfigured
+/// <summary>Posts optional notifications to a Discord-compatible webhook. Never throws - a failed or unconfigured
 /// webhook must never interrupt the scan/search flow that triggered the notification.</summary>
 public class NotificationService(HttpClient httpClient)
 {

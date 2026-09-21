@@ -66,7 +66,7 @@ public class ScanCacheStore : IDisposable
             o.RootFolderPath = rootFolderPath;
         });
 
-    /// <summary>Reads the existing override row (if any), applies <paramref name="mutate"/>, then replaces the row — deleting it entirely if the result has no fields set. Read-mutate-write instead of blind delete+insert, so setting one override field never wipes another already-set field on the same series.</summary>
+    /// <summary>Applies <paramref name="mutate"/> to the existing override row and replaces it, deleting the row if no fields remain set. Read-mutate-write so setting one field never wipes another.</summary>
     private void UpsertSeriesOverride(int shokoSeriesId, Action<SeriesOverride> mutate)
     {
         var col = _db.GetCollection<SeriesOverride>(SeriesOverridesCollectionName);
@@ -114,7 +114,15 @@ public class ScanCacheStore : IDisposable
         return col.FindAll().ToList();
     }
 
-    /// <summary>Removes a pending search entry once it's been reconciled (or is being replaced — see <see cref="AddPendingSearch"/>).</summary>
+    /// <summary>Bumps the failed-reconciliation count and stores the latest error on an existing pending entry.</summary>
+    public void RecordPendingFailure(PendingSearch entry, string error)
+    {
+        entry.FailedReconciliations++;
+        entry.LastError = error;
+        AddPendingSearch(entry);
+    }
+
+    /// <summary>Removes a pending search entry once it's been reconciled (or is being replaced - see <see cref="AddPendingSearch"/>).</summary>
     public void RemovePendingSearch(int shokoSeriesId, int anidbEpisodeId)
     {
         var col = _db.GetCollection<PendingSearch>(PendingSearchesCollectionName);

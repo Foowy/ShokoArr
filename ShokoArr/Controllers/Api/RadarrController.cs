@@ -3,7 +3,7 @@ using ShokoArr.Services;
 
 namespace ShokoArr.Controllers.Api;
 
-/// <summary>Request body for a Radarr title search — movie-type suggestions have no TMDB link to auto-resolve from, so this is the only matching path.</summary>
+/// <summary>Request body for a Radarr title search - movie-type suggestions have no TMDB link to auto-resolve from, so this is the only matching path.</summary>
 /// <param name="Title">The title to search for.</param>
 public record RadarrSearchTitleRequest(string Title);
 

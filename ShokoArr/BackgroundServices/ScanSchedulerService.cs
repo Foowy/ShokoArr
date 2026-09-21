@@ -27,7 +27,7 @@ public class ScanSchedulerService(ISystemService systemService, MissingEpisodeSc
                 var intervalHours = settingsSource.GetSonarr().ScanIntervalHours;
                 if (intervalHours <= 0)
                 {
-                    // Scheduled scanning disabled — re-check hourly in case the user re-enables it.
+                    // Scheduled scanning disabled - re-check hourly in case the user re-enables it.
                     await Task.Delay(TimeSpan.FromHours(1), stoppingToken).ConfigureAwait(false);
                     continue;
                 }

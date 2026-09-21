@@ -6,7 +6,7 @@ namespace ShokoArr.Services;
 /// <summary>Resolution outcome for matching a Shoko series to a Sonarr series.</summary>
 public record MatchResolution(bool AutoResolved, int? TvdbId, List<SonarrSeriesLookupResult> Candidates, string? ErrorMessage);
 
-/// <summary>Resolves a Shoko series to a Sonarr TVDB ID — via the TMDB-linked TVDB ID first, falling back to a confirmable title search.</summary>
+/// <summary>Resolves a Shoko series to a Sonarr TVDB ID - via the TMDB-linked TVDB ID first, falling back to a confirmable title search.</summary>
 public class SeriesMatcher(SonarrClient sonarrClient)
 {
     /// <summary>

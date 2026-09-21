@@ -9,7 +9,7 @@ public class PendingSearch
     /// <summary>The series title at the time the search was triggered, for display without a re-lookup. Empty for entries persisted before this field was added.</summary>
     public string SeriesTitle { get; set; } = string.Empty;
 
-    /// <summary>The AniDB episode ID — the stable key used to match this entry back to a scan result.</summary>
+    /// <summary>The AniDB episode ID - the stable key used to match this entry back to a scan result.</summary>
     public int AnidbEpisodeId { get; set; }
 
     /// <summary>The episode title at the time the search was triggered, for display without a re-lookup. Empty for entries persisted before this field was added.</summary>
@@ -26,4 +26,10 @@ public class PendingSearch
 
     /// <summary>When the search was triggered, in UTC.</summary>
     public DateTime TriggeredAtUtc { get; set; }
+
+    /// <summary>How many scans have failed to unmonitor this episode in Sonarr since the search was triggered.</summary>
+    public int FailedReconciliations { get; set; }
+
+    /// <summary>The error from the most recent failed reconciliation attempt.</summary>
+    public string? LastError { get; set; }
 }

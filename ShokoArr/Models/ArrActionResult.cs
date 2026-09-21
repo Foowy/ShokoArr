@@ -1,6 +1,6 @@
 namespace ShokoArr.Models;
 
-/// <summary>Typed result envelope for *arr-family API calls — never throws on HTTP/connectivity failure, callers check <see cref="Success"/>.</summary>
+/// <summary>Typed result envelope for *arr-family API calls - never throws on HTTP/connectivity failure, callers check <see cref="Success"/>.</summary>
 public class ArrActionResult<T>
 {
     /// <summary>Whether the call succeeded.</summary>

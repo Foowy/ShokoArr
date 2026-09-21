@@ -35,7 +35,7 @@ public class MissingEpisodeScanner(IMetadataService metadataService, ScanCacheSt
         }
     }
 
-    /// <summary>Recomputes just the one changed series, splices it into the persisted snapshot, and re-persists — under the same lock as <see cref="ScanAsync"/> so a concurrent full scan can't clobber the patch (or vice versa). Reconciliation is unaffected; it runs only on a full scan.</summary>
+    /// <summary>Recomputes one series and splices it into the persisted snapshot, under the same lock as <see cref="ScanAsync"/>. Does not reconcile.</summary>
     public async Task<ScanSnapshot> PatchSeriesAsync(int shokoSeriesId, CancellationToken ct = default)
     {
         var updated = await ScanSeriesAsync(shokoSeriesId, ct).ConfigureAwait(false);
@@ -109,7 +109,7 @@ public class MissingEpisodeScanner(IMetadataService metadataService, ScanCacheSt
         };
     }
 
-    /// <summary>An episode Shoko knows about but has no file for, and that isn't user-hidden — i.e. a candidate for a Sonarr search. Type-filtering (specials scope) is applied separately by each caller.</summary>
+    /// <summary>An episode Shoko knows about but has no file for, and that isn't user-hidden - i.e. a candidate for a Sonarr search. Type-filtering (specials scope) is applied separately by each caller.</summary>
     private static bool IsMissingVideo(IShokoEpisode e) => !e.IsHidden && e.Videos.Count == 0;
 
     /// <summary>Every episode or special of a series with no file that isn't user-hidden, regardless of the specials scope.</summary>
@@ -183,9 +183,9 @@ public class MissingEpisodeScanner(IMetadataService metadataService, ScanCacheSt
         return result;
     }
 
-    /// <summary>For each pending search whose episode is no longer in the fresh missing-episode results, tells Sonarr to unmonitor it and clears the pending entry. A failed Sonarr call is logged and left pending for the next scan — it must never fail the scan itself.
-    /// "No longer in the results" covers two cases treated identically: the episode was actually imported by Shoko, or it fell out of scan scope (e.g. a specials-exclude override was set after the search was triggered). Both mean the plugin should stop tracking it and tell Sonarr to stop chasing it.
-    /// <paramref name="stillMissingKeys"/> deliberately ignores the HideUnaired display filter — an episode hidden from the dashboard because it hasn't aired yet is still missing, not reconciled.</summary>
+    /// <summary>Unmonitors in Sonarr, and stops tracking, each pending episode no longer missing in the fresh results. Failures are logged and retried next scan, never thrown.
+    /// "No longer missing" covers both an actual Shoko import and a scope change (e.g. a specials-exclude override).
+    /// <paramref name="stillMissingKeys"/> ignores HideUnaired: an unaired episode hidden from the dashboard is still missing.</summary>
     private async Task ReconcilePendingSearchesAsync(List<PendingSearch> pending, HashSet<(int ShokoSeriesId, int AnidbEpisodeId)> stillMissingKeys, HashSet<(int ShokoSeriesId, int AnidbEpisodeId)> descopedKeys, Config.SonarrSettings settings, CancellationToken ct)
     {
         if (pending.Count == 0)
@@ -209,6 +209,7 @@ public class MissingEpisodeScanner(IMetadataService metadataService, ScanCacheSt
                 else
                 {
                     s_logger.Warn("ShokoArr: failed to unmonitor Sonarr episode {SonarrEpisodeId} for AniDB episode {AnidbEpisodeId}: {Error}", entry.SonarrEpisodeId, entry.AnidbEpisodeId, result.ErrorMessage);
+                    cacheStore.RecordPendingFailure(entry, result.ErrorMessage!);
                     await ExpireIfStaleAsync(settings, entry, ct).ConfigureAwait(false);
                 }
             }
@@ -219,6 +220,7 @@ public class MissingEpisodeScanner(IMetadataService metadataService, ScanCacheSt
             catch (Exception ex)
             {
                 s_logger.Warn(ex, "ShokoArr: failed to unmonitor Sonarr episode {SonarrEpisodeId} for AniDB episode {AnidbEpisodeId}", entry.SonarrEpisodeId, entry.AnidbEpisodeId);
+                cacheStore.RecordPendingFailure(entry, ex.Message);
                 await ExpireIfStaleAsync(settings, entry, ct).ConfigureAwait(false);
             }
         }
@@ -236,6 +238,6 @@ public class MissingEpisodeScanner(IMetadataService metadataService, ScanCacheSt
 
         var seriesLabel = string.IsNullOrEmpty(entry.SeriesTitle) ? $"series #{entry.ShokoSeriesId}" : entry.SeriesTitle;
         var episodeLabel = string.IsNullOrEmpty(entry.EpisodeTitle) ? $"AniDB episode {entry.AnidbEpisodeId}" : entry.EpisodeTitle;
-        await notificationService.NotifyAsync(settings, $"Gave up tracking **{seriesLabel}** — {episodeLabel} — after {MaxPendingAge.TotalDays:0} days of failed reconciliation", ct).ConfigureAwait(false);
+        await notificationService.NotifyAsync(settings, $"Gave up tracking **{seriesLabel}** - {episodeLabel} - after {MaxPendingAge.TotalDays:0} days of failed reconciliation", ct).ConfigureAwait(false);
     }
 }

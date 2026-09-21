@@ -26,7 +26,7 @@ public class SonarrController(SeriesMatcher matcher, SonarrSearchService searchS
 {
     /// <summary>Resolves a Sonarr match for the given Shoko series from the cached scan snapshot.</summary>
     /// <param name="shokoSeriesId">The Shoko series ID.</param>
-    /// <returns>The match resolution — auto-resolved, candidate list for confirmation, or no-match error.</returns>
+    /// <returns>The match resolution - auto-resolved, candidate list for confirmation, or no-match error.</returns>
     [HttpGet("match/{shokoSeriesId:int}")]
     public async Task<IActionResult> GetMatch(int shokoSeriesId)
     {
@@ -51,7 +51,7 @@ public class SonarrController(SeriesMatcher matcher, SonarrSearchService searchS
         return Ok(new ApiResponse<object>(Success: result.Success, Message: result.ErrorMessage, Data: result.Data));
     }
 
-    /// <summary>Adds a wholly unowned series to Sonarr, fully monitored with an immediate search — used for discovery suggestions, which have no per-episode missing data to selectively monitor (unlike the owned-series add-and-search flow).</summary>
+    /// <summary>Adds a wholly unowned series to Sonarr, fully monitored with an immediate search - used for discovery suggestions, which have no per-episode missing data to selectively monitor (unlike the owned-series add-and-search flow).</summary>
     /// <param name="request">The confirmed TVDB ID and title to add.</param>
     /// <returns>200 on success, 409/400 with a message describing what failed.</returns>
     [HttpPost("add-discovery")]
@@ -69,7 +69,7 @@ public class SonarrController(SeriesMatcher matcher, SonarrSearchService searchS
         return Ok(new ApiResponse<object>(Success: true, Message: null, Data: null));
     }
 
-    /// <summary>Retroactively tags owned series already present in Sonarr with their Shoko group's title, for series added before tag propagation existed. Series not yet in Sonarr are skipped — they get tagged automatically at add time.</summary>
+    /// <summary>Retroactively tags owned series already present in Sonarr with their Shoko group's title, for series added before tag propagation existed. Series not yet in Sonarr are skipped - they get tagged automatically at add time.</summary>
     /// <returns>200 with a summary of updated/skipped/failed counts.</returns>
     [HttpPost("sync-tags")]
     public async Task<IActionResult> SyncTags()
@@ -120,7 +120,7 @@ public class SonarrController(SeriesMatcher matcher, SonarrSearchService searchS
         if (qualityProfileId is null || string.IsNullOrEmpty(rootFolderPath))
             return BadRequest(new ApiResponse<object>(Success: false, Message: "Quality profile and root folder must be configured in Settings before adding a series.", Data: null));
 
-        // Lookup returns candidates regardless of whether already added, so check existence first — this single action must work whether the series is new or not.
+        // Lookup returns candidates regardless of whether already added, so check existence first - this single action must work whether the series is new or not.
         var existing = await sonarrClient.GetExistingSeriesByTvdbIdAsync(settings, request.TvdbId);
         if (existing.Success && existing.Data!.Count > 0)
             return await MonitorAndSearchAsync(settings, request.ShokoSeriesId, existing.Data[0].Id, existing.Data[0].TitleSlug, request.AnidbEpisodeIds, series);
