@@ -348,4 +348,25 @@ public class SonarrClientTests
         Assert.False(result.Success);
         Assert.Contains("401", result.ErrorMessage);
     }
+
+    [Fact]
+    public async Task GetQueuedEpisodeIdsAsync_FullPage_FetchesNextPage()
+    {
+        var pages = new List<string>();
+        var handler = new FakeHandler(r =>
+        {
+            pages.Add(r.RequestUri!.Query);
+            var page = r.RequestUri.Query.Contains("page=1&") ? Enumerable.Range(1, 1000) : [5000];
+            var records = string.Join(",", page.Select(id => $$"""{"episodeId":{{id}}}"""));
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent($$"""{"records":[{{records}}]}""") };
+        });
+        var client = new SonarrClient(new HttpClient(handler));
+
+        var result = await client.GetQueuedEpisodeIdsAsync(TestSettings);
+
+        Assert.True(result.Success);
+        Assert.Equal(1001, result.Data!.Count);
+        Assert.Contains(5000, result.Data);
+        Assert.Equal(2, pages.Count);
+    }
 }

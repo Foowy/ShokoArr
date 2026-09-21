@@ -9,13 +9,13 @@ public class SonarrEpisodeStatusResolver(SonarrClient sonarrClient)
     public Task<Session> BeginAsync(SonarrSettings settings, CancellationToken ct) =>
         Task.FromResult(new Session(sonarrClient, settings, ct));
 
-    /// <summary>State for one scan: the queue is fetched once, and the first failed Sonarr call disables all further calls.</summary>
+    /// <summary>State for one scan: the queue is fetched once, and the first failed Sonarr call disables all further calls. Safe to call concurrently.</summary>
     public class Session(SonarrClient sonarrClient, SonarrSettings settings, CancellationToken ct)
     {
         // Each failed call can burn the full 30 s HttpClient timeout; without this a scan of
         // 100+ series against a dead Sonarr would hang for over an hour.
-        private bool _unreachable = string.IsNullOrWhiteSpace(settings.BaseUrl);
-        private HashSet<int>? _queued;
+        private volatile bool _unreachable = string.IsNullOrWhiteSpace(settings.BaseUrl);
+        private readonly Lazy<Task<ArrActionResult<HashSet<int>>>> _queue = new(() => sonarrClient.GetQueuedEpisodeIdsAsync(settings, ct));
 
         public async Task ApplyAsync(SeriesMissingResult series)
         {
@@ -39,23 +39,18 @@ public class SonarrEpisodeStatusResolver(SonarrClient sonarrClient)
                 return;
             }
 
-            if (_queued is null)
+            var queue = await _queue.Value.ConfigureAwait(false);
+            if (!queue.Success)
             {
-                var queue = await sonarrClient.GetQueuedEpisodeIdsAsync(settings, ct).ConfigureAwait(false);
-                if (!queue.Success)
-                {
-                    _unreachable = true;
-                    return;
-                }
-
-                _queued = queue.Data!;
+                _unreachable = true;
+                return;
             }
 
             var anyAbsolute = episodes.Data!.Any(se => se.AbsoluteEpisodeNumber.HasValue);
             foreach (var ep in series.MissingEpisodes)
             {
                 var match = SonarrEpisodeMatcher.Match(episodes.Data!, anyAbsolute, ep);
-                ep.SonarrState = match is null ? "none" : match.HasFile ? "downloaded" : _queued.Contains(match.Id) ? "downloading" : "none";
+                ep.SonarrState = match is null ? "none" : match.HasFile ? "downloaded" : queue.Data!.Contains(match.Id) ? "downloading" : "none";
             }
         }
     }

@@ -124,19 +124,29 @@ public class SonarrClient(HttpClient httpClient) : ArrClientBase(httpClient)
     public Task<ArrActionResult<List<SonarrEpisodeResource>>> GetEpisodesAsync(SonarrSettings settings, int sonarrSeriesId, CancellationToken ct = default) =>
         SendAsync<List<SonarrEpisodeResource>>(BuildRequest(HttpMethod.Get, settings, $"/api/v3/episode?seriesId={sonarrSeriesId}"), ct);
 
-    /// <summary>Gets the Sonarr episode IDs currently in the download queue (first 1000 queue items).</summary>
+    /// <summary>Gets the Sonarr episode IDs currently in the download queue, paging until a short page.</summary>
     public async Task<ArrActionResult<HashSet<int>>> GetQueuedEpisodeIdsAsync(SonarrSettings settings, CancellationToken ct = default)
     {
-        var result = await SendAsync<JsonElement>(BuildRequest(HttpMethod.Get, settings, "/api/v3/queue?page=1&pageSize=1000"), ct).ConfigureAwait(false);
-        if (!result.Success)
-            return ArrActionResult<HashSet<int>>.Fail(result.ErrorMessage!);
-
+        const int PageSize = 1000;
         var ids = new HashSet<int>();
-        if (result.Data.ValueKind == JsonValueKind.Object && result.Data.TryGetProperty("records", out var records) && records.ValueKind == JsonValueKind.Array)
-            foreach (var record in records.EnumerateArray())
-                if (record.ValueKind == JsonValueKind.Object && record.TryGetProperty("episodeId", out var id) && id.ValueKind == JsonValueKind.Number && id.TryGetInt32(out var value))
-                    ids.Add(value);
-        return ArrActionResult<HashSet<int>>.Ok(ids);
+        for (var page = 1; ; page++)
+        {
+            var result = await SendAsync<JsonElement>(BuildRequest(HttpMethod.Get, settings, $"/api/v3/queue?page={page}&pageSize={PageSize}"), ct).ConfigureAwait(false);
+            if (!result.Success)
+                return ArrActionResult<HashSet<int>>.Fail(result.ErrorMessage!);
+
+            var count = 0;
+            if (result.Data.ValueKind == JsonValueKind.Object && result.Data.TryGetProperty("records", out var records) && records.ValueKind == JsonValueKind.Array)
+                foreach (var record in records.EnumerateArray())
+                {
+                    count++;
+                    if (record.ValueKind == JsonValueKind.Object && record.TryGetProperty("episodeId", out var id) && id.ValueKind == JsonValueKind.Number && id.TryGetInt32(out var value))
+                        ids.Add(value);
+                }
+
+            if (count < PageSize)
+                return ArrActionResult<HashSet<int>>.Ok(ids);
+        }
     }
 
     /// <summary>Sets the given episodes to monitored, without touching any other episode's monitored state.</summary>
