@@ -51,7 +51,7 @@ jobs:
 
           # Check if the input/release reference looks like a standard tag (e.g. starts with v)
           if [[ "$TAG" =~ ^v[0-9] ]]; then
-            echo "is_tag=true" >> $GITHUB_OUTPUT
+            echo "is_tag=true" >> "$GITHUB_OUTPUT"
             VERSION="${TAG#v}"
             VERSION_BASE=$(echo "$VERSION" | cut -d'.' -f1-3)
 
@@ -68,17 +68,19 @@ jobs:
             fi
 
             if [[ "$IS_PRERELEASE" == "true" ]]; then
-              echo "file_ver=v${VERSION_BASE}-dev" >> $GITHUB_OUTPUT
-              echo "release_channel=Dev" >> $GITHUB_OUTPUT
+              echo "file_ver=v${VERSION_BASE}-dev" >> "$GITHUB_OUTPUT"
+              echo "release_channel=Dev" >> "$GITHUB_OUTPUT"
             else
-              echo "file_ver=v${VERSION_BASE}" >> $GITHUB_OUTPUT
-              echo "release_channel=Stable" >> $GITHUB_OUTPUT
+              echo "file_ver=v${VERSION_BASE}" >> "$GITHUB_OUTPUT"
+              echo "release_channel=Stable" >> "$GITHUB_OUTPUT"
             fi
           else
             # Fallback for branch-based test builds
-            echo "is_tag=false" >> $GITHUB_OUTPUT
-            echo "file_ver=$TAG" >> $GITHUB_OUTPUT
-            echo "release_channel=Dev" >> $GITHUB_OUTPUT
+            {
+              echo "is_tag=false"
+              echo "file_ver=$TAG"
+              echo "release_channel=Dev"
+            } >> "$GITHUB_OUTPUT"
           fi
 
       - name: Publish
@@ -95,7 +97,7 @@ jobs:
           ZIP_NAME="ShokoArr-${{ steps.vars.outputs.file_ver }}_${{ matrix.rid }}.zip"
           cd publish
           zip -r "../$ZIP_NAME" .
-          echo "zip_path=$ZIP_NAME" >> $GITHUB_OUTPUT
+          echo "zip_path=$ZIP_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Package ZIP (Windows)
         if: runner.os == 'Windows'
