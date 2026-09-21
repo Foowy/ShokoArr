@@ -14,9 +14,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  select-runner:
+    name: Select runner
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      runner: ${{ steps.pick.outputs.runner }}
+    steps:
+      - name: Pick chaos if online, else GitHub-hosted
+        id: pick
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
+          REPO: ${{ github.repository }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+        run: |
+          runner='["ubuntu-latest"]'
+          if [[ "$HEAD_REPO" == "$REPO" ]]; then
+            online=$(gh api "repos/$REPO/actions/runners" --jq '[.runners[] | select(.status == "online" and any(.labels[]; .name == "chaos"))] | length' 2>/dev/null || echo 0)
+            if [[ "$online" -gt 0 ]]; then
+              runner='["self-hosted","chaos"]'
+            fi
+          fi
+          echo "runner=$runner" >> "$GITHUB_OUTPUT"
+
   build-and-test:
     name: Build & Test
-    runs-on: ubuntu-latest
+    needs: select-runner
+    runs-on: ${{ fromJSON(needs.select-runner.outputs.runner) }}
     timeout-minutes: 15
     steps:
       - name: Checkout
