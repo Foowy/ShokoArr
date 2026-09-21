@@ -17,6 +17,7 @@ jobs:
   publish:
     name: Build & attach ${{ matrix.rid }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -50,9 +51,15 @@ jobs:
 
           # Check if the input/release reference looks like a standard tag (e.g. starts with v)
           if [[ "$TAG" =~ ^v[0-9] ]]; then
-            echo "is_tag=true" >> $GITHUB_OUTPUT
+            echo "is_tag=true" >> "$GITHUB_OUTPUT"
             VERSION="${TAG#v}"
             VERSION_BASE=$(echo "$VERSION" | cut -d'.' -f1-3)
+
+            CSPROJ_VERSION=$(grep -oP '<Version>\K[^<]+' ShokoArr/ShokoArr.csproj)
+            if [[ "${VERSION_BASE%%-*}" != "$CSPROJ_VERSION" ]]; then
+              echo "::error::Tag $TAG does not match ShokoArr.csproj Version $CSPROJ_VERSION"
+              exit 1
+            fi
 
             if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
               IS_PRERELEASE=$(gh release view "$TAG" --repo "${{ github.repository }}" --json isPrerelease -q .isPrerelease)
@@ -61,17 +68,19 @@ jobs:
             fi
 
             if [[ "$IS_PRERELEASE" == "true" ]]; then
-              echo "file_ver=v${VERSION_BASE}-dev" >> $GITHUB_OUTPUT
-              echo "release_channel=Dev" >> $GITHUB_OUTPUT
+              echo "file_ver=v${VERSION_BASE}-dev" >> "$GITHUB_OUTPUT"
+              echo "release_channel=Dev" >> "$GITHUB_OUTPUT"
             else
-              echo "file_ver=v${VERSION_BASE}" >> $GITHUB_OUTPUT
-              echo "release_channel=Stable" >> $GITHUB_OUTPUT
+              echo "file_ver=v${VERSION_BASE}" >> "$GITHUB_OUTPUT"
+              echo "release_channel=Stable" >> "$GITHUB_OUTPUT"
             fi
           else
             # Fallback for branch-based test builds
-            echo "is_tag=false" >> $GITHUB_OUTPUT
-            echo "file_ver=$TAG" >> $GITHUB_OUTPUT
-            echo "release_channel=Dev" >> $GITHUB_OUTPUT
+            {
+              echo "is_tag=false"
+              echo "file_ver=$TAG"
+              echo "release_channel=Dev"
+            } >> "$GITHUB_OUTPUT"
           fi
 
       - name: Publish
@@ -88,7 +97,7 @@ jobs:
           ZIP_NAME="ShokoArr-${{ steps.vars.outputs.file_ver }}_${{ matrix.rid }}.zip"
           cd publish
           zip -r "../$ZIP_NAME" .
-          echo "zip_path=$ZIP_NAME" >> $GITHUB_OUTPUT
+          echo "zip_path=$ZIP_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Package ZIP (Windows)
         if: runner.os == 'Windows'
@@ -122,6 +131,7 @@ jobs:
     # Run if triggered by release (published) or tag dispatch.
     if: startsWith(github.event.inputs.tag_name, 'v') || github.event_name == 'release'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
         with:
