@@ -92,11 +92,10 @@ public class MissingEpisodeScanner(IMetadataService metadataService, ScanCacheSt
 
             var result = BuildSeriesResult(series, inScope, settings, pendingByKey, today);
             if (result is not null)
-            {
-                await statusSession.ApplyAsync(result).ConfigureAwait(false);
                 results.Add(result);
-            }
         }
+
+        await Parallel.ForEachAsync(results, new ParallelOptions { MaxDegreeOfParallelism = 4, CancellationToken = ct }, (r, _) => new ValueTask(statusSession.ApplyAsync(r))).ConfigureAwait(false);
 
         var descopedKeys = new HashSet<(int ShokoSeriesId, int AnidbEpisodeId)>(missingIgnoringScope);
         descopedKeys.ExceptWith(stillMissingKeys);
